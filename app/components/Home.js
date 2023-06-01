@@ -1,19 +1,20 @@
 // @flow
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import routes from '../constants/routes.json';
 import io from 'socket.io-client';
 import log4js from 'log4js';
+import routes from '../constants/routes.json';
 import ConfigModal from './evolverConfigs/ConfigModal';
 import RelaunchModal from './RelaunchModal';
 
-var fs = require('fs');
+const fs = require('fs');
 const Store = require('electron-store');
-const { ipcRenderer } = require('electron');
+
 const store = new Store();
 
-const remote = require('electron').remote;
-const app = remote.app;
+const { remote } = require('electron');
+
+const { app } = remote;
 
 type Props = {};
 
@@ -91,7 +92,7 @@ export default class Home extends Component<Props> {
       else {
         if (!isPi() && store.has('activeEvolver')){
           var ip = store.get('activeEvolver').value;
-          ipcRenderer.send('active-ip', ip)
+          // ipcRenderer.send('active-ip', ip)
 	        var socketString = "http://" + ip + ":8081/dpu-evolver";
           this.state.socket = io.connect(socketString, {reconnect:true});
           this.state.evolverIp = ip;
@@ -140,13 +141,13 @@ export default class Home extends Component<Props> {
   }
 
   handleYes = () => {
-    ipcRenderer.send('kill-expts', {relaunch: true});
+    this.state.socket.send('kill-expts', {relaunch: true});
     this.setState({alertOpen: false,});
     store.set('first_visit', false);
   }
 
   handleNo = () => {
-    ipcRenderer.send('kill-expts', {relaunch: false})
+    this.state.socket.send('kill-expts', {relaunch: false})
     this.setState({alertOpen: false});
     store.set('first_visit', false);
   };

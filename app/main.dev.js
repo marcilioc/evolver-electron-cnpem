@@ -11,6 +11,7 @@
  * @flow
  */
 import { ipcMain, app, BrowserWindow, Menu  } from 'electron';
+import { version } from 'prettier';
 import MenuBuilder from './menu';
 
 let mainWindow = null;
@@ -30,9 +31,9 @@ const EVOLVERPORT = 13;
 const NAME = 15;
 const BLANK = 17;
 
-var path = require('path');
-var ps = require('ps-node');
-var fs = require('fs');
+const path = require('path');
+const ps = require('ps-node');
+const fs = require('fs');
 const http = require('https');
 const Store = require('electron-store');
 const { exec } = require("child_process");
@@ -45,20 +46,20 @@ const store = new Store({
     first_visit: null
   }
 });
-var backgroundShells = [];
-var tasks = [];
-var available = [];
-var maxShells = 5;
+const backgroundShells = [];
+const tasks = [];
+const available = [];
+const maxShells = 5;
 
-var exptMap = {};
-var activeIp = '';
+const exptMap = {};
+const activeIp = '';
 
-var isWin = process.platform === "win32";
+const isWin = process.platform === "win32";
 
 /* Get array of running experiments from exptMap. Store path and pid information only. */
 function storeRunningExpts() {
-  var runningExpts = Object.keys(exptMap).reduce(function(obj, x) {
-    var data = {
+  const runningExpts = Object.keys(exptMap).reduce((obj, x) => {
+    const data = {
       path: x,
       pid: exptMap[x].childProcess.pid
     };
@@ -72,24 +73,24 @@ function storeRunningExpts() {
 
 /* Handle startup of a python shell instance to run the DPU */
 function startPythonExpt(exptDir, flag) {
-  var scriptName = path.join(exptDir, 'eVOLVER.py');
-  var pythonPath = path.join(store.get('dpu-env'), 'bin', 'python3');
+  const scriptName = path.join(exptDir, 'eVOLVER.py');
+  let pythonPath = path.join(store.get('dpu-env'), 'bin', 'python3');
   if (isWin) {
     pythonPath = path.join(store.get('dpu-env'), 'Scripts', 'python');
   }
-  var options = {
+  const options = {
       mode: 'text',
-      pythonPath: pythonPath,
+      pythonPath,
       args: flag
     };
-  var pyShell = new PythonShell(scriptName, options);
-  pyShell.on('message', function(message) {
+  const pyShell = new PythonShell(scriptName, options);
+  pyShell.on('message', (message) => {
     console.log(message);
   });
   exptMap[exptDir] = pyShell;
-  var pid = pyShell.childProcess.pid;
-  pyShell.on('close', function() {
-    console.log('eVOLVER script with PID ' + pid + ' closed.');
+  const {pid} = pyShell.childProcess;
+  pyShell.on('close', () => {
+    console.log(`eVOLVER script with PID ${pid} closed.`);
      delete exptMap[exptDir];
      storeRunningExpts();
      mainWindow.webContents.send('running-expts',Object.keys(exptMap));
@@ -99,14 +100,14 @@ function startPythonExpt(exptDir, flag) {
 }
 
 function startPythonCalibration(calibrationName, ip, fitType, fitName, params) {
-    var scriptName = path.join(app.getPath('userData'), 'calibration', 'calibrate.py');
-    var pythonPath = path.join(store.get('dpu-env'), 'bin', 'python3');
+    const scriptName = path.join(app.getPath('userData'), 'calibration', 'calibrate.py');
+    let pythonPath = path.join(store.get('dpu-env'), 'bin', 'python3');
     if (isWin) {
         pythonPath = path.join(store.get('dpu-env'), 'Scripts', 'python');
     }
-    var options = {
+    const options = {
         mode: 'text',
-        pythonPath: pythonPath,
+        pythonPath,
         args: ['--always-yes',
                 '--no-graph',
                 '-a', ip,
@@ -115,32 +116,32 @@ function startPythonCalibration(calibrationName, ip, fitType, fitName, params) {
                 '-t', fitType,
                 '-p', params]
     }
-    var pyShell = new PythonShell(scriptName, options);
-    pyShell.on('close', function() {
-        console.log('Calibration finished for ' + calibrationName);
+    const pyShell = new PythonShell(scriptName, options);
+    pyShell.on('close', () => {
+        console.log(`Calibration finished for ${calibrationName}`);
         mainWindow.webContents.send('calibration-finished', calibrationName);
     })
 }
 
 /* Handle killing and relaunching experiments not connected to application. */
 function killExpts(relaunch) {
-  var running_expts_copy = []
-  for (var i = 0; i < store.get('running_expts').length; i++) {
+  const running_expts_copy = []
+  for (let i = 0; i < store.get('running_expts').length; i++) {
     running_expts_copy.push(store.get('running_expts')[i]);
   }
   store.set('running_expts', []);
   for (var i = 0; i < running_expts_copy.length; i++) {
-    ps.lookup({pid: running_expts_copy[i].pid}, function(err, resultList) {
+    ps.lookup({pid: running_expts_copy[i].pid}, (err, resultList) => {
       if (err) {
         throw new Error(err);
       }
       if (resultList.length === 0) {
         return;
       }
-      var expt_process = resultList[0];
-      for (var i = 0; i < expt_process.arguments.length; i++) {
+      const expt_process = resultList[0];
+      for (let i = 0; i < expt_process.arguments.length; i++) {
         if (expt_process.arguments[i].includes('eVOLVER.py')) {
-          ps.kill(expt_process.pid, function(err) {
+          ps.kill(expt_process.pid, (err) => {
             if (err) {
               throw new Error(err);
             }
@@ -159,12 +160,12 @@ function killExpts(relaunch) {
   }
 }
 
-ipcMain.on('start-script', (event, arg) => {
+ipcMain.on('start-script', (arg) => {
     console.log(arg);
   startPythonExpt(arg, '--always-yes');
 });
 
-ipcMain.on('stop-script', (event, arg) => {
+ipcMain.on('stop-script', (arg) => {
    exptMap[arg].send('stop-script');
    // Wait 3 seconds for the commands to be sent to stop the pumps before killing the process
    setTimeout(() => {
@@ -175,19 +176,19 @@ ipcMain.on('stop-script', (event, arg) => {
 
 });
 
-ipcMain.on('start-calibration', (event, experimentName, ip, fitType, fitName, params) => {
+ipcMain.on('start-calibration', (experimentName, ip, fitType, fitName, params) => {
     startPythonCalibration(experimentName, ip, fitType, fitName, params);
 });
 
-ipcMain.on('running-expts', (event, arg) => {
+ipcMain.on('running-expts', () => {
    mainWindow.webContents.send('running-expts',Object.keys(exptMap));
 });
 
-ipcMain.on('active-ip', (event, arg) => {
+ipcMain.on('active-ip', (arg) => {
   mainWindow.webContents.send('get-ip', arg);
   });
 
-ipcMain.on('kill-expts', (event, arg) => {
+ipcMain.on('kill-expts', (arg) => {
   killExpts(arg.relaunch);
   });
 
@@ -216,7 +217,7 @@ const installExtensions = async () => {
 };
 
 function createWindow () {
-  var position = [];
+  let position = [];
   if (mainWindow) {
     position = mainWindow.getPosition();
   }
@@ -246,7 +247,7 @@ function createWindow () {
   mainWindow.loadURL(`file://${__dirname}/app.html`);
 
   // Uncomment to view dev tools on startup.
-  //mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   // @TODO: Use 'ready-to-show' event
   //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
@@ -262,14 +263,14 @@ function createWindow () {
     }
   });
 
-  mainWindow.on('close', function(e){
+  mainWindow.on('close', (e) => {
     if (store.get('running_expts').length > 0) {
-      var runningExpts = [];
-      var message = '';
-      var detail = '';
+      const runningExpts = [];
+      let message = '';
+      let detail = '';
 
-      for (var i = 0; i < store.get('running_expts').length; i++) {
-        var temp = store.get('running_expts')[i].path;
+      for (let i = 0; i < store.get('running_expts').length; i++) {
+        const temp = store.get('running_expts')[i].path;
         runningExpts.push(temp.split('/').pop())
       };
       message = 'The following running experiments have been detected and will persist if the application is closed. Would you still like to close the application?';
@@ -280,11 +281,11 @@ function createWindow () {
           type: 'question',
           buttons: ['Yes', 'No'],
           title: 'Confirm',
-          message: message,
-          detail: detail
+          message,
+          detail
           });
     };
-       if(choice == 1){
+       if(choice === 1){
          e.preventDefault();
        }
     });
@@ -320,4 +321,4 @@ app.on('activate', () => {
 setAboutPanelOptions() only available for macOS
 app.setAboutPanelOptions({
   copyright: "Copyright © 2019 Fynch Biosciences Inc."
-});*/
+}); */

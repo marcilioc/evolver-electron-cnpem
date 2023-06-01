@@ -2,30 +2,28 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import routes from '../constants/routes.json';
 import { withStyles } from '@material-ui/core/styles';
 import {FaArrowLeft, FaPen} from 'react-icons/fa';
-import ScriptFinder from './python-shell/ScriptFinder'
+import ReactTooltip from 'react-tooltip';
 import Card from '@material-ui/core/Card';
-const { ipcRenderer } = require('electron');
+import ScriptFinder from './python-shell/ScriptFinder'
 import ModalClone from './python-shell/ModalClone';
 import ModalReset from './python-shell/ModalReset';
-import ReactTooltip from 'react-tooltip';
+import routes from '../constants/routes.json';
 
+const { ipcRenderer } = require('electron');
 const remote = require('electron').remote;
 const app = remote.app;
 const http = require('https');
 const Store = require('electron-store');
-const store = new Store();
 const { dialog } = require('electron').remote
+const fs = require('fs');
+const rimraf = require('rimraf');
+const path = require('path');
+const os = require('os');
 
-var fs = require('fs');
-var rimraf = require('rimraf');
-var path = require('path');
-var os = require('os');
-
+const store = new Store();
 const filesToCopy = ['custom_script.py', 'eVOLVER.py', 'nbstreamreader.py', 'pump_cal.txt', 'eVOLVER_parameters.json'];
-
 const styles = {
   cardRoot: {
     width: 1000,
@@ -44,7 +42,7 @@ const styles = {
 };
 
 function startScript(exptDir) {
-    ipcRenderer.send('start-script', exptDir);
+    this.state.socket.emit('start-script', exptDir);
 };
 
 class ExptManager extends React.Component {
@@ -56,7 +54,7 @@ class ExptManager extends React.Component {
     }
     this.state = {
       scriptDir: 'experiments',
-      exptLocation: exptLocation,
+      exptLocation,
       activeScript: '',
       runningExpts: [],
       alertOpen: false,
@@ -65,20 +63,20 @@ class ExptManager extends React.Component {
       alertDirections: 'Enter new experiment name',
       exptToClone: '',
       refind: false,
-      evolverIp: this.props.evolverIp            
+      evolverIp: this.props.evolverIp
     };
 
     ipcRenderer.on('to-renderer', (event, arg) => {
     });
 
-    ipcRenderer.on('running-expts', (event, arg) => {
+    ipcRenderer.on('running-expts', (arg) => {
         this.setState({runningExpts: arg, disablePlay: false});
     });
 
     ipcRenderer.send('running-expts');
 
-    ipcRenderer.on('get-ip', (event, arg) => {
-        console.log('We just got ip from main for some reason ' + arg);
+    ipcRenderer.on('get-ip', (arg) => {
+        console.log(`We just got ip from main for some reason ${arg}`);
       this.setState({evolverIp: arg});
       });
     if (!fs.existsSync(path.join(app.getPath('userData'), this.state.scriptDir))) {
@@ -108,11 +106,11 @@ class ExptManager extends React.Component {
   }
 
   handleStop = (script) => {
-    ipcRenderer.send('stop-script', path.join(this.state.exptLocation, this.state.scriptDir, script));
+    this.props.socket.emit('stop-script', path.join(this.state.exptLocation, this.state.scriptDir, script));
   }
 
   handleContinue = (script) => {
-     ipcRenderer.send('continue-script', path.join(this.state.exptLocation, this.state.scriptDir, script));
+     this.props.socket.emit('continue-script', path.join(this.state.exptLocation, this.state.scriptDir, script));
   };
 
     handleEdit = (script) => {
@@ -161,12 +159,12 @@ class ExptManager extends React.Component {
         });
         this.setState({refind: !this.state.refind});
     }
-    
+
     resetDefaultExptDir = () => {
         this.setState({exptLocation: app.getPath('userData')});
         store.set('exptLocation', app.getPath('userData'));
     }
-    
+
     changeExptDirectory = () => {
         var exptDirectory = this.state.exptLocation;
         var isWin = os.platform() === 'win32';

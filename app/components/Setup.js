@@ -1,17 +1,18 @@
 // @flow
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
+import {FaArrowLeft} from 'react-icons/fa';
 import routes from '../constants/routes.json';
 import data from './sample-data'
-import VialSelector from './VialSelector'
-import Navbar from './Navbar'
-import SetupButtons from './setupButtons/SetupButtons'
+import VialSelector from './VialSelector';
+import Navbar from './Navbar';
+import SetupButtons from './setupButtons/SetupButtons';
 import ButtonCards from './setupButtons/ButtonCards';
-import {FaArrowLeft} from 'react-icons/fa';
-import SetupLog from './setupButtons/SetupLog'
-const Store = require('electron-store');
-const store = new Store();
+import SetupLog from './setupButtons/SetupLog';
 
+const Store = require('electron-store');
+
+const store = new Store();
 
 export default class Setup extends Component<Props> {
   constructor(props) {
@@ -41,7 +42,7 @@ export default class Setup extends Component<Props> {
       this.props.socket.on('broadcast', function(response) {this.handleRawData(this.handlePiIncoming(response.data), this.state.showRawOD, this.state.showRawTemp)}.bind(this));
       this.props.socket.on('fitnames', function(response) {
         var odCalFiles = [];
-        var tempCalFiles = [];
+        var tempCalFiles = []
         var pumpCalFiles = [];
         for (var i = 0; i < response.length; i++) {
             if (response[i].calibrationType == "od") {
@@ -118,14 +119,14 @@ export default class Setup extends Component<Props> {
 
       if (responseData.od_135)
       {
-          rawData[i].od_135 = responseData.od_135[i];          
+          rawData[i].od_135 = responseData.od_135[i];
       }
       if (responseData.od_90) {
-          rawData[i].od_90 = responseData.od_90[i];          
+          rawData[i].od_90 = responseData.od_90[i];
       }
       if (responseData.temp) {
-          rawData[i].temp = responseData.temp[i];          
-      }      
+          rawData[i].temp = responseData.temp[i];
+      }
     }
     return rawData
   }
@@ -233,7 +234,7 @@ export default class Setup extends Component<Props> {
     evolverMessage = Array(16).fill("NaN")
     if (evolverComponent == "pump") {
       evolverMessage = Array(48).fill("--");
-      for (var i = 0; i < 48; i++) {    
+      for (var i = 0; i < 48; i++) {
         if (value.in1) {
           evolverMessage[vials[i]] = value.time;
         }

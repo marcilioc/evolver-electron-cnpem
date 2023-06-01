@@ -3,15 +3,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Redirect } from 'react-router';
 import { Link } from 'react-router-dom';
-import routes from '../constants/routes.json';
-import ODcalInput from './calibrationInputs/CalInputs';
 import { withStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
-import ODcalGUI from './calibrationInputs/CalGUI';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import {FaPlay, FaArrowLeft, FaArrowRight, FaStop, FaCheck, FaPen } from 'react-icons/fa';
 import normalize from 'array-normalize'
 import CircularProgress from '@material-ui/core/CircularProgress';
+import routes from '../constants/routes.json';
+import ODcalInput from './calibrationInputs/CalInputs';
+import ODcalGUI from './calibrationInputs/CalGUI';
 import TextKeyboard from './calibrationInputs/TextKeyboard';
 import ModalAlert from './calibrationInputs/ModalAlert';
 import VialArrayGraph from './graphing/VialArrayGraph';
@@ -95,7 +95,7 @@ class ODcal extends React.Component {
         var calibrationsFile = fs.createWriteStream(path.join(app.getPath('userData'), 'calibration', 'calibrate.py'));
         var calibrationScriptRequest = http.get("https://raw.githubusercontent.com/FYNCH-BIO/dpu/rc/calibration/calibrate.py", function(response) {response.pipe(calibrationsFile)});
     }
-    ipcRenderer.on('calibration-finished', (event, calibrationName) => {this.props.socket.emit('getcalibration', {name: calibrationName})});
+    ipcRenderer.on('calibration-finished', (calibrationName) => {this.props.socket.emit('getcalibration', {name: calibrationName})});
     this.props.socket.on('calibration', function(response) {
         this.setState({displayGraphs: true, displayCalibration: true, alertOpen: false, calibration: response});
     }.bind(this));
@@ -118,7 +118,7 @@ class ODcal extends React.Component {
                use the formula: (-currentStep -1) + vialIndex. If this is negative,
                do 15 - <value>.
             */
-            for (var i = 0; i < response.data.od_90.length; i++) {
+            for (let i = 0; i < response.data.od_90.length; i++) {
               var shift = this.calculateShift(i);
               if (response.data.od_135) {
                 newVialData.od135[i][shift].push(parseInt(response.data.od_135[i]));
@@ -138,7 +138,7 @@ class ODcal extends React.Component {
         var newSkipFirst = false;
 
         // Check how many reads have been finished by looking through the data structure
-        for (var i = 0; i < 16; i++) {
+        for (let i = 0; i < 16; i++) {
           if (newVialData.od90[0][i].length === this.state.timesRead) {
             readsFinished += 1;
           }
@@ -164,9 +164,9 @@ class ODcal extends React.Component {
     }.bind(this));
 
     this.props.socket.on('calibrationrawcallback', function(response) {
-      if (response == 'success'){
+      if (response === 'success'){
         store.delete('runningODCal');
-        ipcRenderer.send('start-calibration', this.state.experimentName, this.props.socket.io.opts.hostname, 'sigmoid', this.state.experimentName, 'od_90', true);
+        this.props.socket.emit('start-calibration', this.state.experimentName, this.props.socket.io.opts.hostname, 'sigmoid', this.state.experimentName, 'od_90', true);
       }
     }.bind(this));
   }
@@ -325,7 +325,7 @@ class ODcal extends React.Component {
 
   handleStepOne = () => {
     let floatValues = [];
-    var i;
+    let i;
     for (i = 0; i < this.state.enteredValues.length; i++) {
       floatValues[i] = parseFloat(this.state.enteredValues[i]);
     }
@@ -341,8 +341,8 @@ class ODcal extends React.Component {
   }
 
   handleKeyboardInput = (input) => {
-    var exptName;
-    if (input == ''){
+    let exptName;
+    if (input === ''){
       exptName = 'ODCal-' + new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
     } else {
       exptName = input
@@ -374,21 +374,21 @@ class ODcal extends React.Component {
   }
 
   onAlertAnswer = (answer) => {
-    if (answer == 'Retry'){
+    if (answer === 'Retry'){
       this.handleFinishExpt();
     }
-    if (answer == 'Exit'){
+    if (answer === 'Exit'){
       store.delete('runningODCal');
       this.setState({exiting: true});
     }
   }
 
   onResumeAnswer = (answer) => {
-    if (answer == 'New'){
+    if (answer === 'New'){
       this.keyboard.current.onOpenModal();
       store.delete('runningODCal');
     }
-    if (answer == 'Resume'){
+    if (answer === 'Resume'){
       var previousState = store.get('runningODCal');
       this.setState(previousState);
     }
@@ -396,7 +396,7 @@ class ODcal extends React.Component {
   }
 
   calculateShift = (i) => {
-    var shift = -(this.state.currentStep - 1) + i;
+    let shift = -(this.state.currentStep - 1) + i;
     if (shift < 0) {
       shift = 16 + shift;
     }
@@ -421,7 +421,6 @@ class ODcal extends React.Component {
         </button>;
         try {
           if (this.state.vialData.od135[0][this.calculateShift(0)].length === this.state.timesRead){
-
               measureButton =
               <button
                 className="measureBtn"
@@ -522,13 +521,13 @@ class ODcal extends React.Component {
         linearProgress = <div></div>
         graphs = <VialArrayGraph
             parameter = {this.state.parameter}
-            exptDir = {'na'}
-            activePlot = {'ALL'}
+            exptDir = 'na'
+            activePlot = 'ALL'
             ymax = {65000}
             timePlotted = {this.state.timePlotted}
             downsample = {this.state.downsample}
-            xaxisName = {'OPTICAL DENSITY'}
-            yaxisName = {'ADC VALUE'}
+            xaxisName = 'OPTICAL DENSITY'
+            yaxisName = 'ADC VALUE'
             displayCalibration = {this.state.displayCalibration}
             dataType = {{type:'calibration', param: 'od90'}}
             passedData = {{vialData: this.state.vialData, enteredValuesFloat: this.state.enteredValuesFloat, calibration: this.state.calibration}}/>;

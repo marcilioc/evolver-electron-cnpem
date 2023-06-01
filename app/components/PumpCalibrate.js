@@ -3,22 +3,24 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Redirect } from 'react-router';
-import routes from '../constants/routes.json';
 import { withStyles } from '@material-ui/core/styles';
-import PumpcalInput from './calibrationInputs/CalInputs';
 import Card from '@material-ui/core/Card';
-import PumpCalGUI from './calibrationInputs/CalGUI';
 import LinearProgress from '@material-ui/core/LinearProgress';
-import {FaPlay, FaArrowLeft, FaArrowRight, FaStop, FaCheck, FaPen } from 'react-icons/fa';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import { LensTwoTone } from '@material-ui/icons';
+import {FaPlay, FaArrowLeft, FaArrowRight, FaStop, FaCheck, FaPen } from 'react-icons/fa';
+import routes from '../constants/routes.json';
+import PumpcalInput from './calibrationInputs/CalInputs';
+import PumpCalGUI from './calibrationInputs/CalGUI';
 import TextKeyboard from './calibrationInputs/TextKeyboard';
 import ModalAlert from './calibrationInputs/ModalAlert';
 import VialSelectorPumpCal from './VialSelectorPumpCal';
 import data from './sample-data-pump-cal';
-import PumpCalRadioButtons from './PumpCalRadioButtons'
-const Store = require('electron-store');
-const store = new Store(); //runningPumpCal
+import PumpCalRadioButtons from './PumpCalRadioButtons';
 
+const Store = require('electron-store');
+
+const store = new Store(); // runningPumpCal
 
 const styles = {
   cardPumpCalGUI: {
@@ -86,8 +88,8 @@ class PumpCal extends React.Component {
   constructor(props) {
     super(props);
     this.keyboard = React.createRef();
-    var vialData = []
-    for (var i = 0; i < data.length; i++) {
+    const vialData = []
+    for (let i = 0; i < data.length; i++) {
       vialData.push(Object.assign({},data[i]));
     }
    this.state = {
@@ -96,7 +98,7 @@ class PumpCal extends React.Component {
       pumpCalModesFiltered: [],
       pumpTimes: {slow: 100, fast: 10},
       enteredValues: {IN1: Array(16).fill(''), IN2: Array(16).fill(''), E: Array(16).fill('')},
-      vialData: vialData,
+      vialData,
       buttonAdvanceText: '',
       buttonBackText: '',
       pumpButtonText: 'PUMP',
@@ -207,8 +209,8 @@ class PumpCal extends React.Component {
    }
 
    handleKeyboardInput = (input) => {
-     var exptName;
-     if (input == ''){
+     let exptName;
+     if (input === ''){
        exptName = 'Pump-' + new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
      } else {
        exptName = input
@@ -225,7 +227,7 @@ class PumpCal extends React.Component {
       var vialDataStructured = this.state.enteredValues['IN1'].concat(this.state.enteredValues['E']).concat(this.state.enteredValues['IN2']);
       var mode;
       var coefficients = [];
-      for (var i = 0; i < 48; i++) {
+      for (let i = 0; i < 48; i++) {
         if (i < 16) {
           mode = this.state.pumpCalModes[0].arrayMode;
         }
@@ -257,19 +259,19 @@ class PumpCal extends React.Component {
    }
 
    onAlertAnswer = (answer) => {
-     if (answer == 'Exit'){
+     if (answer === 'Exit'){
        store.delete('runningPumpCal');
        this.setState({exiting: true});
      }
    }
 
    onResumeAnswer = (answer) => {
-     if (answer == 'New'){
+     if (answer === 'New'){
        this.keyboard.current.onOpenModal();
        store.delete('runningPumpCal');
      }
-     if (answer == 'Resume'){
-       var previousState = store.get('runningPumpCal');
+     if (answer === 'Resume'){
+       const previousState = store.get('runningPumpCal');
        this.setState(previousState);
      }
      this.setState({resumeOpen:false})
@@ -280,19 +282,19 @@ class PumpCal extends React.Component {
    };
 
    formatVialSelectStrings = (newData, parameter) => {
-     for(var i = 0; i < newData.length; i++) {
-       var value;
-       if (parameter == 'IN1'){
+     for(let i = 0; i < newData.length; i++) {
+       let value;
+       if (parameter === 'IN1'){
          value = newData[i].IN1 === '--' ? '--' : newData[i].IN1.toFixed(2);
-         newData[i].IN1 = 'IN1: ' + value + ' ml/s';
+         newData[i].IN1 = `IN1: ${value} ml/s`;
        }
-       if (parameter == 'IN2'){
+       if (parameter === 'IN2'){
          value = newData[i].IN2 === '--' ? '--' : newData[i].IN2.toFixed(2);
-         newData[i].IN2 = 'IN2: ' + value + ' ml/s';
+         newData[i].IN2 = `IN2: ${value} ml/s`;
        }
-       if (parameter == 'E'){
+       if (parameter === 'E'){
         value = newData[i].E === '--' ? '--' : newData[i].E.toFixed(2);
-         newData[i].E = 'E: ' + value + ' ml/s';
+         newData[i].E = `E: ${value} ml/s`;
        }
      }
      return newData
@@ -300,13 +302,13 @@ class PumpCal extends React.Component {
 
    handleSelectRadio = (name,value) => {
     console.log(value);
-     var pumpCalModes = this.state.pumpCalModes
-     for (var i = 0; i < pumpCalModes.length; i++) {
+     const pumpCalModes = this.state.pumpCalModes
+     for (let i = 0; i < pumpCalModes.length; i++) {
       if (pumpCalModes[i].arrayName === name) {
         pumpCalModes[i].arrayMode = value;
       }
      }
-     this.setState({pumpCalModes: pumpCalModes});
+     this.setState({pumpCalModes});
    };
 
    handleSubmit = () => {
@@ -320,13 +322,13 @@ class PumpCal extends React.Component {
     var pumpArray = this.state.pumpCalModesFiltered[this.state.currentStep-1].arrayName;
     var pumpTime = this.state.pumpCalModesFiltered[this.state.currentStep-1].arrayMode === 'fast' ? this.state.pumpTimes.fast : this.state.pumpTimes.slow;
     for (var i = 0; i < vials.length; i++) {
-      if (pumpArray == 'IN1') {
+      if (pumpArray === 'IN1') {
         evolverMessage[vials[i]] = pumpTime;
       }
-      if (pumpArray == 'E') {
+      if (pumpArray === 'E') {
         evolverMessage[vials[i] + 16] = pumpTime;
       }
-      if (pumpArray == 'IN2') {
+      if (pumpArray === 'IN2') {
         evolverMessage[vials[i] + 32] = pumpTime;
       }
     }

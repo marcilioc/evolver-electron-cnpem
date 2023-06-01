@@ -3,26 +3,27 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Redirect } from 'react-router';
-import routes from '../constants/routes.json';
 import { withStyles } from '@material-ui/core/styles';
-import TempcalInput from './calibrationInputs/CalInputs';
 import Card from '@material-ui/core/Card';
-import TempCalGUI from './calibrationInputs/CalGUI';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import {FaPlay, FaArrowLeft, FaArrowRight, FaStop, FaCheck, FaPen } from 'react-icons/fa';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import TempCalGUI from './calibrationInputs/CalGUI';
+import TempcalInput from './calibrationInputs/CalInputs';
+import routes from '../constants/routes.json';
 import TextKeyboard from './calibrationInputs/TextKeyboard';
 import ModalAlert from './calibrationInputs/ModalAlert';
 import VialArrayGraph from './graphing/VialArrayGraph';
+
 const http = require('https');
-var path = require('path');
-var fs = require('fs');
+const path = require('path');
+const fs = require('fs');
 const remote = require('electron').remote;
 const app = remote.app;
 const { ipcRenderer } = require('electron');
 const Store = require('electron-store');
-const store = new Store(); //runningTempCal
 
+const store = new Store(); // runningTempCal
 
 const styles = {
   cardTempCalGUI: {
@@ -55,15 +56,15 @@ function generateVialLabel (response, oldTempStream, roomTempAvg) {
   var tempStream = Array(16).fill('...');
   var deltaTempStream = Array(16).fill('...');
   var valueInputs = Array(16).fill('...')
-  for (var i = 0; i < response.data.temp.length; i++) {
+  for (let i = 0; i < response.data.temp.length; i++) {
     //  To Not show value during RT reading
     // if (roomTempAvg.length !== 0){
       tempStream[i] = response.data.temp[i]
       deltaTempStream[i] = tempStream[i] - oldTempStream[i];
       if (isNaN(deltaTempStream[i])){
-        deltaTempStream[i] = "0"
+        deltaTempStream[i] = "0";
       }
-      valueInputs[i] = tempStream[i] + " (" + (deltaTempStream[i]<0?"":"+") + deltaTempStream[i] + ")"
+      valueInputs[i] = tempStream[i] + " (" + (deltaTempStream[i]<0?"":"+") + deltaTempStream[i] + ")";
     // }
   }
 
@@ -71,8 +72,8 @@ function generateVialLabel (response, oldTempStream, roomTempAvg) {
 }
 
 function calculateVialProgress (currentTemp, previousLockedTemp, targetTemp){
-  var percentCompleted = []
-  for (var i = 0; i < currentTemp.length; i++) {
+  const percentCompleted = []
+  for (let i = 0; i < currentTemp.length; i++) {
     percentCompleted[i] = Math.round(5 + (95 *Math.abs(((currentTemp[i] - previousLockedTemp[i])/(targetTemp[i] - previousLockedTemp[i])))));
   }
   return percentCompleted
@@ -391,8 +392,8 @@ class TempCal extends React.Component {
     }
 
    handleKeyboardInput = (input) => {
-     var exptName;
-     if (input == ''){
+     let exptName;
+     if (input === ''){
        exptName = 'Temp-' + new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
      } else {
        exptName = input
@@ -409,8 +410,8 @@ class TempCal extends React.Component {
 
       // TODO: Change data structure so that we don't have to do this transformation. Would require other code restructure
       // Data should be saved vial -> step -> data format, not step -> vial -> data as it is here.
-      for(var i = 0; i < this.state.vialData.length; i++) {
-        for(var j = 0; j < this.state.vialData[i].enteredValues.length; j++) {
+      for(let i = 0; i < this.state.vialData.length; i++) {
+        for(let j = 0; j < this.state.vialData[i].enteredValues.length; j++) {
           if(!enteredValuesStructured[j]) {
             enteredValuesStructured.push([]);
             vialDataStructured.push(new Array(3).fill([]));
@@ -438,11 +439,11 @@ class TempCal extends React.Component {
    }
 
    onResumeAnswer = (answer) => {
-     if (answer == 'New'){
+     if (answer === 'New'){
        this.keyboard.current.onOpenModal();
        store.delete('runningTempCal');
      }
-     if (answer == 'Resume'){
+     if (answer === 'Resume'){
        var previousState = store.get('runningTempCal');
        this.setState(previousState);
      }
@@ -460,10 +461,10 @@ class TempCal extends React.Component {
     let measureButton;
     let statusText;
 
-    if ((this.state.vialData.length == 0) && (this.state.equilibrateState)) {
+    if ((this.state.vialData.length === 0) && (this.state.equilibrateState)) {
       statusText = <p className="statusText">Load vessels w/ 15 mL of room temp water. </p>
     }
-    else if ((this.state.vialData.length == 0) && (!this.state.equilibrateState)) {
+    else if ((this.state.vialData.length === 0) && (!this.state.equilibrateState)) {
       statusText = <p className="statusText"> Heaters turned off. Let equilibrate, then enter values. </p>
     }
     else if ((this.state.vialData.length !== 0) && (this.state.equilibrateState)) {
@@ -576,13 +577,13 @@ class TempCal extends React.Component {
         linearProgress = <div></div>
         graphs = <VialArrayGraph
             parameter = {this.state.parameter}
-            exptDir = {'na'}
-            activePlot = {'ALL'}
+            exptDir = 'na'
+            activePlot = 'ALL'
             ymax = {55}
             timePlotted = {this.state.timePlotted}
             downsample = {this.state.downsample}
-            xaxisName = {'ADC VALUE'}
-            yaxisName = {'TEMPERATURE (C)'}
+            xaxisName = 'ADC VALUE'
+            yaxisName = 'TEMPERATURE (C)'
             displayCalibration = {this.state.displayCalibration}
             dataType = {{type:'calibration', param: 'temp'}}
             passedData = {{vialData: this.state.vialData, enteredValuesFloat: this.state.enteredValues, calibration: this.state.calibration}}/>;

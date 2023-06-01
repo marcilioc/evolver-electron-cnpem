@@ -3,14 +3,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import Modal from 'react-responsive-modal';
-import styles from './config-modal.css';
 import {FaCircle, FaPlus} from 'react-icons/fa';
-var fs = require('fs');
+import styles from './config-modal.css';
 import RpiConfig from './RpiConfig'
 import DesktopConfig from './DesktopConfig'
 import EvolverSelect from './EvolverSelect'
 
+const fs = require('fs');
 const Store = require('electron-store');
+
 const store = new Store();
 
 class ConfigModal extends React.Component {
@@ -108,7 +109,7 @@ class ConfigModal extends React.Component {
         <Modal
           open={open}
           closeOnEsc={false}
-          closeOnOverlayClick={false}          
+          closeOnOverlayClick={false}
           onClose={this.onCloseModal}
           classNames={{
              closeButton: styles.customcloseButton,
