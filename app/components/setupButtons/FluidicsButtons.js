@@ -6,7 +6,6 @@ import FluidicsSlider from './FluidicsSlider'
 import { withStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 
-
 const styles = {
   root: {
     marginTop: -20,

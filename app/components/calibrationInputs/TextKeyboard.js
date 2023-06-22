@@ -6,7 +6,6 @@ import styles from './modal-styling.css';
 import {FaPen} from 'react-icons/fa';
 import KeyboardEventHandler from 'react-keyboard-event-handler';
 
-
 class TextKeyboard extends React.Component {
   state = {
     open: false,
@@ -24,7 +23,6 @@ class TextKeyboard extends React.Component {
     this.props.onKeyboardInput(this.state.input)
     this.setState({ open: false});
   };
-
 
   onChange = input => {
     this.setState({

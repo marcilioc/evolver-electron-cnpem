@@ -10,11 +10,9 @@ const Octokit = require('@octokit/rest')
 var octokit;
 var os = require('os');
 
-
 const cardStyles = {
 
 };
-
 
 class GitLogin extends React.Component {
   constructor(props) {
@@ -110,8 +108,6 @@ class GitLogin extends React.Component {
 
      };
   };
-
-
 
   render() {
     const { open } = this.state;

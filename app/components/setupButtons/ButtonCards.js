@@ -10,13 +10,11 @@ import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import SwipeableViews from 'react-swipeable-views';
 import Card from '@material-ui/core/Card';
 
-
 import TempSlider from './TempSlider'
 import StirSlider from './StirSlider'
 import FluidicsButtons from './FluidicsButtons'
 import LightButtons from './LightButtons'
 import CalibrationButtons from './CalibrationButtons'
-
 
 const tutorialSteps = [
   {

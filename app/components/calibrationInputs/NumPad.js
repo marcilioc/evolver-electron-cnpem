@@ -6,7 +6,6 @@ import { FaBackspace } from 'react-icons/fa';
 import KeyboardEventHandler from 'react-keyboard-event-handler';
 import Paper from '@material-ui/core/Paper';
 
-
 const numButtons = [
   {label: '7'},
   {label: '8'},
@@ -21,7 +20,6 @@ const numButtons = [
   {label: '0'},
   {label: '.'},
 ];
-
 
 const styles = theme => ({
   cardNumPad: {
@@ -124,7 +122,6 @@ class NumPad extends React.Component {
     this.props.onNumChange('');
     this.setState({ inputString: ''});
   };
-
 
   render() {
     const { inputString } = this.state;

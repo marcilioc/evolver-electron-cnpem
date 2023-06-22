@@ -2,7 +2,6 @@ import React from 'react'
 import Dropzone from 'react-dropzone'
 import {MdFileUpload} from 'react-icons/md';
 
-
 const overlayStyle = {
   position: 'absolute',
   top: 0,

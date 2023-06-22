@@ -4,7 +4,6 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 
-
 const styles = theme => ({
   progressRoot:{
     margin: '-1.52px 0px 0px -1.2px'
@@ -22,8 +21,6 @@ const styles = theme => ({
     strokeWidth: '3px',
   }
 });
-
-
 
 class VialOutline extends React.Component {
   constructor(props) {
@@ -47,8 +44,6 @@ class VialOutline extends React.Component {
   render() {
     const { classes, theme } = this.props;
     const { readProgress } = this.state;
-
-
 
     return(
       <ul className="outlineWrapper">

@@ -55,7 +55,6 @@ function findIP(){
   return addresses
 }
 
-
 class RpiConfig extends React.Component {
   constructor(props) {
     super(props);
@@ -98,7 +97,6 @@ class RpiConfig extends React.Component {
     }
     this.props.socket.emit("setdevicename", deviceData);
   }
-
 
   render() {
     const { classes, theme } = this.props;

@@ -63,7 +63,6 @@ const dot = (color = "#ccc") => ({
   }
 });
 
-
 class EvolverSelect extends React.Component {
   _isMounted = false;
 
@@ -90,7 +89,7 @@ class EvolverSelect extends React.Component {
     }
     if (store.has('evolverExptMap') && this.props.selectedExperiment) {
       selectedOption = registeredEvolvers.filter(evo => evo.label === store.get('evolverExptMap')[this.props.selectedExperiment]);
-    }    
+    }
     if (this.props.evolverIp) {
         selectedOption = registeredEvolvers.filter(evo => evo.value === this.props.evolverIp);
     }
@@ -103,12 +102,12 @@ class EvolverSelect extends React.Component {
       registeredEvolvers: registeredEvolvers,
       title: title}, () => {console.log(this.state)})
   }
-  
+
   componentDidUpdate(prevProps) {
       if (this.props.evolverIp !== prevProps.evolverIp) {
          var selectedOption = this.state.registeredEvolvers.filter(evo => evo.value === this.props.evolverIp);
          this.setState({selectedOption: selectedOption});
-      }      
+      }
   }
 
   componentWillUnmount() {

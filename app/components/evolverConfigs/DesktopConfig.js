@@ -1,17 +1,15 @@
 // @flow
 import React from 'react';
-import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 import Typography from '@material-ui/core/Typography';
-import KeyboardEventHandler from 'react-keyboard-event-handler';
 import io from 'socket.io-client'
+
 const Store = require('electron-store');
+
 const store = new Store();
 
-
-const cardStyles = theme => ({
+const cardStyles = () => ({
   card: {
     width: 800,
     height: 500,
@@ -62,11 +60,12 @@ const cardStyles = theme => ({
   },
 })
 
+// eVOLVER Registration/Unregistration handling
 class DesktopConfig extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      value: '192.168.1.',
+      value: '10.0.',
       newEvolver: {},
       showRegistrationStatus: false,
       registered: false,
@@ -80,54 +79,59 @@ class DesktopConfig extends React.Component {
     this.setState({value: event.target.value});
   }
 
+  // Handle Submit of a new eVOLVER Unit to the GUI
   handleSubmit() {
-    var ip = this.state.value
-    console.log(ip)
+    // eslint-disable-next-line react/no-access-state-in-setstate
+    const ip = this.state.value;
+    console.log(ip);
 
-    var newEvolver= {};
-    newEvolver['value'] = ip;
-    var socketString = "http://" + ip + ":8081/dpu-evolver";
+    const newEvolver= {};
+    newEvolver.value = ip;
+    // Default eVOLVER URL
+    const socketString = `http://${ip}:8081/dpu-evolver`;
     console.log(socketString)
-    var registerSocket = io.connect(socketString, {reconnect:true});
-    this.setState({registerSocket: registerSocket, newEvolver: newEvolver, showRegistrationStatus: true, registrationStatusIP: ip, registered: false, unregistered: false},
-      function() {
-        this.state.registerSocket.on('connect', function(){
+
+    // Connection to receive the identification from eVOLVER
+    const registerSocket = io.connect(socketString, {reconnect:true});
+    this.setState({registerSocket, newEvolver, showRegistrationStatus: true, registrationStatusIP: ip, registered: false, unregistered: false},
+      () => {
+        this.state.registerSocket.on('connect', () => {
           console.log("Connected registration socket")
-          this.state.registerSocket.emit('getdevicename', {})}.bind(this));
-        this.state.registerSocket.on('broadcastname', function(response) {
+          this.state.registerSocket.emit('getdevicename', {})});
+        this.state.registerSocket.on('broadcastname', (response) => {
             console.log(response)
 
-            var newEvolver = this.state.newEvolver;
-            newEvolver['name'] = response['deviceName']
-            newEvolver['label'] = response['deviceName'] + ' (' + newEvolver['value'] +')';
-            newEvolver['mac'] = response['mac']
-            newEvolver['statusColor'] = '#DC143C'
-            console.log(newEvolver)
-            this.setState({newEvolver: newEvolver})
-          }.bind(this))
+            const evolverDevice = this.state.newEvolver;
+            evolverDevice.name = response.deviceName;
+            evolverDevice.label = `${response.deviceName} (${newEvolver.value})`;
+            evolverDevice.mac = response.mac;
+            evolverDevice.statusColor = '#DC143C';
+            console.log(evolverDevice)
+            // Sets the newEvolver initial state
+            this.setState({newEvolver})
+          })
       })
 
   }
 
   enterPressed(event) {
-    var code = event.keyCode || event.which;
-    if(code === 13) { //13 is the enter keycode
-      this.handleSubmit();
-    }
+    const code = event.keyCode || event.which;
+    // 13 is the enter keycode
+    if(code === 13) this.handleSubmit();
   }
 
   handleLogEvolver = () => {
-    var registeredEvolvers = [];
-    var registeredIndex = undefined;
+    let registeredEvolvers = [];
+    let registeredIndex;
     if (store.has('registeredEvolvers')){
       registeredEvolvers = store.get('registeredEvolvers');
     }
-    for (var i = 0; i < registeredEvolvers.length; i++) {
-      if (registeredEvolvers[i]['value'] == this.state.newEvolver.value){
+    for (let i = 0; i < registeredEvolvers.length; i++) {
+      if (registeredEvolvers[i].value === this.state.newEvolver.value){
         registeredIndex = i;
       }
     }
-    if (registeredIndex == undefined){
+    if (registeredIndex === undefined){
       registeredEvolvers.push(this.state.newEvolver)
     } else {
       registeredEvolvers[registeredIndex] = this.state.newEvolver;
@@ -139,8 +143,8 @@ class DesktopConfig extends React.Component {
   }
 
   handleUnregister = (registeredIndex) => {
-    var registeredEvolvers = store.get('registeredEvolvers');
-    if (registeredEvolvers[registeredIndex].value == store.get('activeEvolver').value){
+    let registeredEvolvers = store.get('registeredEvolvers');
+    if (registeredEvolvers[registeredIndex].value === store.get('activeEvolver').value){
       store.delete('activeEvolver');
       store.delete('activeODCal');
       store.delete('activeTempCal');
@@ -151,29 +155,29 @@ class DesktopConfig extends React.Component {
 
   }
 
-
   render() {
     const { classes, theme } = this.props;
 
-    var registeredEvolvers = [];
-    var registeredIndex = undefined;
+    let registeredEvolvers = [];
+    let registeredIndex;
     if (store.has('registeredEvolvers')){
       registeredEvolvers = store.get('registeredEvolvers');
     }
-    for (var i = 0; i < registeredEvolvers.length; i++) {
-      if (registeredEvolvers[i]['value'] == this.state.newEvolver.value){
+    for (let i = 0; i < registeredEvolvers.length; i++) {
+      if (registeredEvolvers[i].value === this.state.newEvolver.value){
         registeredIndex = i;
       }
     }
 
-    let registrationButton, registrationText;
+    let registrationButton;
+    let registrationText;
 
-    if (registeredIndex == undefined){
-      registrationButton =  <button className='logEvolverRegistration' onClick={this.handleLogEvolver}>Register!</button>
+    if (registeredIndex === undefined){
+      registrationButton = <button className='logEvolverRegistration' onClick={this.handleLogEvolver}>Register!</button>
       registrationText = <Typography className={classes.registrationStatus}> eVOLVER Found! Please register to use with this app. </Typography>
 
     } else {
-      registrationButton =  <button className='logEvolverRegistration' onClick={() => this.handleUnregister(registeredIndex)}>Unregister</button>
+      registrationButton = <button className='logEvolverRegistration' onClick={() => this.handleUnregister(registeredIndex)}>Unregister</button>
       registrationText = <Typography className={classes.registrationStatus}> Already registered! Please proceed to unregister eVOLVER. </Typography>
     }
 
@@ -200,7 +204,7 @@ class DesktopConfig extends React.Component {
               {registrationButton}
             </div>
           </div>
-      } else if (!this.state.registerSocket.connected && registeredIndex == undefined) {
+      } else if (!this.state.registerSocket.connected && registeredIndex === undefined) {
         registrationStatus =
             <Typography className={classes.registrationStatus}> eVOLVER not found on this IP ({this.state.registrationStatusIP}). Please verify IP address and check device connection. </Typography>
       } else if (!this.state.registerSocket.connected && registeredIndex !== undefined){

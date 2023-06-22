@@ -36,7 +36,6 @@ export default class VialItem extends Component<Props> {
 
   render() {
 
-
     return(
       <ul>
         <PoseGroup>

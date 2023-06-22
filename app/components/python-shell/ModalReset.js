@@ -6,12 +6,9 @@ import { withStyles } from '@material-ui/core/styles';
 import Modal from 'react-responsive-modal';
 import styles from './modal-styling.css';
 
-
-
 const cardStyles = {
 
 };
-
 
 class ModalReset extends React.Component {
   constructor(props) {
@@ -31,7 +28,7 @@ class ModalReset extends React.Component {
       this.setState({question: this.props.resetQuestion});
     }
   }
-  
+
   componentWillReceiveProps(nextProps) {
       this.setState({open:nextProps.resetOpen, question: nextProps.resetQuestion});
   }
@@ -62,7 +59,7 @@ class ModalReset extends React.Component {
         <Modal
           open={open}
           closeOnEsc={false}
-          closeOnOverlayClick={false}          
+          closeOnOverlayClick={false}
           onClose={this.onCloseModal}
           onRequestClose={this.onCloseModal}
           center

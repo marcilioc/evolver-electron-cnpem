@@ -10,7 +10,6 @@ import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import SwipeableViews from 'react-swipeable-views';
 import Card from '@material-ui/core/Card';
 
-
 import TempSlider from '../setupButtons/TempSlider'
 import StirSlider from '../setupButtons/StirSlider'
 import RateSlider from '../setupButtons/RateSlider'
@@ -18,7 +17,6 @@ import UpperODSlider from '../setupButtons/UpperODSlider'
 import LowerODSlider from '../setupButtons/LowerODSlider'
 import StartTimeSlider from '../setupButtons/StartTimeSlider'
 import StartODSlider from '../setupButtons/StartODSlider'
-
 
 const tutorialStepsTStat = [
   {
@@ -57,7 +55,7 @@ const tutorialStepsCStat = [
     },
     {
         label: 'Temperature',
-        outputTag: 'temp',        
+        outputTag: 'temp',
     },
     {
         label: 'Stir',
@@ -162,7 +160,6 @@ class SwipeableTextMobileStepper extends React.Component {
   componentDidUpdate(prevProps) {
 
   }
-
 
   handleNext = () => {
     this.setState(prevState => ({

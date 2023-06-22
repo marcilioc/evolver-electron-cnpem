@@ -5,8 +5,6 @@ import { withStyles } from '@material-ui/core/styles';
 import io from 'socket.io-client'
 import Select from 'react-select';
 
-
-
 type Props = {};
 const options = [
   { value: 'chocolate', label: 'Chocolate \u25CF' },
@@ -27,7 +25,6 @@ const styles = {
 
 };
 
-
 class SocketConnection extends React.Component {
   props: Props;
 
@@ -43,10 +40,10 @@ class SocketConnection extends React.Component {
     else {
 
       // this.socket = io.connect("http://localhost:8081/dpu-evolver", {reconnect:true});
-      this.socket = io.connect("http://192.168.1.4:8081/dpu-evolver", {reconnect:true});
-      this.socket.on('connect', function(){console.log("Connected evolver");}.bind(this));
-      this.socket.on('disconnect', function(){console.log("Disconnected evolver")});
-      this.socket.on('reconnect', function(){console.log("Reconnected evolver")});
+      this.socket = io("http://192.168.1.4:8081/dpu-evolver", {reconnect:true});
+      this.socket.on('connect', () => console.log("Connected evolver"));
+      this.socket.on('disconnect', () => console.log("Disconnected evolver"));
+      this.socket.on('reconnect', () => console.log("Reconnected evolver"));
     }
   }
 
@@ -57,7 +54,6 @@ class SocketConnection extends React.Component {
 
   render() {
     const { selectedOption } = this.state;
-
 
     return (
       <div

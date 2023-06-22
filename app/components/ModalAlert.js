@@ -5,12 +5,9 @@ import { withStyles } from '@material-ui/core/styles';
 import Modal from 'react-responsive-modal';
 import styles from './modal-styling.css';
 
-
-
 const cardStyles = {
 
 };
-
 
 class ModalAlert extends React.Component {
   constructor(props) {

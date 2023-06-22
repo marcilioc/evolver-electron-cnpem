@@ -2,6 +2,7 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import {FaArrowLeft} from 'react-icons/fa';
+import { LeakAddTwoTone } from '@material-ui/icons';
 import routes from '../constants/routes.json';
 import data from './sample-data'
 import VialSelector from './VialSelector';
@@ -39,39 +40,40 @@ export default class Setup extends Component<Props> {
       this.control = Array.from(new Array(32).keys()).map(item => Math.pow(2,item));
       this.props.socket.emit('getactivecal', {});
       this.props.socket.emit('getfitnames', {});
-      this.props.socket.on('broadcast', function(response) {this.handleRawData(this.handlePiIncoming(response.data), this.state.showRawOD, this.state.showRawTemp)}.bind(this));
-      this.props.socket.on('fitnames', function(response) {
+      this.props.socket.on('broadcast', (response) => this.handleRawData(this.handlePiIncoming(response.data), this.state.showRawOD, this.state.showRawTemp));
+
+      this.props.socket.on('fitnames', (response) => {
         var odCalFiles = [];
-        var tempCalFiles = []
+        var tempCalFiles = [];
         var pumpCalFiles = [];
-        for (var i = 0; i < response.length; i++) {
-            if (response[i].calibrationType == "od") {
+        for (let i = 0; i < response.length; i++) {
+            if (response[i].calibrationType === "od") {
               odCalFiles.push(response[i].name);
             }
-            else if (response[i].calibrationType == "temperature") {
+            else if (response[i].calibrationType === "temperature") {
               tempCalFiles.push(response[i].name);
             }
-            else if (response[i].calibrationType == "pump") {
+            else if (response[i].calibrationType === "pump") {
               pumpCalFiles.push(response[i].name);
             }
         }
         this.setState({odCalFiles: odCalFiles, tempCalFiles: tempCalFiles, pumpCalFiles: pumpCalFiles})
+      });
 
-      }.bind(this))
-      this.props.socket.on('activecalibrations', function(response) {
+      this.props.socket.on('activecalibrations', (response) => {
         var activeODCal;
         var activeTempCal;
         var activePumpCal;
-        for (var i = 0; i < response.length; i++) {
-          for (var j = 0; j < response[i].fits.length; j++) {
+        for (let i = 0; i < response.length; i++) {
+          for (let j = 0; j < response[i].fits.length; j++) {
             if (response[i].fits[j].active) {
-              if (response[i].calibrationType == 'od') {
+              if (response[i].calibrationType === 'od') {
                 activeODCal = response[i].fits[j];
               }
-              else if (response[i].calibrationType == 'temperature') {
+              else if (response[i].calibrationType === 'temperature') {
                 activeTempCal = response[i].fits[j];
               }
-              else if (response[i].calibrationType == 'pump') {
+              else if (response[i].calibrationType === 'pump') {
                 activePumpCal = response[i].fits[j];
               }
             }
@@ -81,13 +83,13 @@ export default class Setup extends Component<Props> {
         store.set('activeODCal', activeODCal.name);
         store.set('activeTempCal', activeTempCal.name);
         store.set('activePumpCal', activePumpCal.name);
-        }.bind(this))
+        });
     }
 
   componentDidMount() {
-    console.log(this.props.socket)
-    this.props.logger.info('Routed to Setup Page.')
-    var initialData = this.state.rawVialData;
+    console.log(this.props.socket);
+    this.props.logger.info('Routed to Setup Page.');
+    let initialData = this.state.rawVialData;
     initialData = this.handleRawToCal(initialData);
     initialData = this.formatVialSelectStrings(initialData, 'od');
     initialData = this.formatVialSelectStrings(initialData, 'temp');
@@ -110,9 +112,9 @@ export default class Setup extends Component<Props> {
   }
 
   handlePiIncoming = (response) => {
-    var responseData = JSON.parse(JSON.stringify(response));
-    var rawData = Array.apply(null, Array(16)).map(function () {});
-    for(var i = 0; i < this.state.vialData.length; i++) {
+    const responseData = JSON.parse(JSON.stringify(response));
+    const rawData = Array.apply(null, Array(16)).map(function () {});
+    for(let i = 0; i < this.state.vialData.length; i++) {
       rawData[i] = {};
       rawData[i].vial = this.state.vialData[i].vial;
       rawData[i].selected = this.state.vialData[i].selected;
@@ -133,7 +135,7 @@ export default class Setup extends Component<Props> {
 
   handleRawData = (rawData, showRawOD, showRawTemp) => {
     console.log(rawData)
-    var newVialData = this.handleRawToCal(rawData, showRawOD, showRawTemp);
+    let newVialData = this.handleRawToCal(rawData, showRawOD, showRawTemp);
     if (!showRawOD && (this.state.odCal.length !== 0)){
       newVialData = this.formatVialSelectStrings(newVialData, 'od');
     }
@@ -144,33 +146,33 @@ export default class Setup extends Component<Props> {
   }
 
   formatVialSelectStrings = (vialData, parameter) => {
-    var newData = JSON.parse(JSON.stringify(vialData));
-    for(var i = 0; i < newData.length; i++) {
-      if (parameter == 'od'){
-        newData[i].od = 'OD: ' + newData[i].od;
+    const newData = JSON.parse(JSON.stringify(vialData));
+    for(let i = 0; i < newData.length; i++) {
+      if (parameter === 'od'){
+        newData[i].od = `OD: ${newData[i].od}`;
       }
-      if (parameter == 'temp'){
-        newData[i].temp = newData[i].temp +'\u00b0C';
+      if (parameter === 'temp'){
+        newData[i].temp = `${newData[i].temp}\u00b0C`;
       }
     }
     return newData
   }
 
   handleRawToCal = (response, showRawOD, showRawTemp) => {
-    var newVialData = JSON.parse(JSON.stringify(response));
-    for(var i = 0; i < newVialData.length; i++) {
+    const newVialData = JSON.parse(JSON.stringify(response));
+    for(let i = 0; i < newVialData.length; i++) {
         try {
           if ((!showRawOD) && (this.state.odCal.length !== 0)) {
-            if (this.state.odCal.type == 'sigmoid') {
+            if (this.state.odCal.type === 'sigmoid') {
               newVialData[i].od = this.sigmoidRawToCal(parseInt(newVialData[i][this.state.odCal.params[0]]), this.state.odCal.coefficients[i]).toFixed(3);
             }
-            else if (this.state.odCal.type == '3d') {
+            else if (this.state.odCal.type === '3d') {
               newVialData[i].od = this.multidimRawToCal(parseInt(newVialData[i][this.state.odCal.params[0]]), parseInt(newVialData[i][this.state.odCal.params[1]]), this.state.odCal.coefficients[i]).toFixed(3);
             }
-          } else if (this.state.odCal.length == 0) {
-            newVialData[i].od = '--'
+          } else if (this.state.odCal.length === 0) {
+            newVialData[i].od = '--';
           } else {
-            newVialData[i].od = newVialData[i][this.state.odCal.params[0]]
+            newVialData[i].od = newVialData[i][this.state.odCal.params[0]];
           }
         }
         catch (err) {
@@ -179,7 +181,7 @@ export default class Setup extends Component<Props> {
         try {
           if ((!showRawTemp) && (this.state.tempCal.length !== 0)){
             newVialData[i].temp = this.linearRawToCal(newVialData[i].temp, this.state.tempCal.coefficients[i]).toFixed(2);
-          } else if (this.state.tempCal.length == 0) {
+          } else if (this.state.tempCal.length === 0) {
             newVialData[i].temp = '--'
           } else {
             newVialData[i].temp = newVialData[i].temp;
@@ -193,8 +195,8 @@ export default class Setup extends Component<Props> {
   };
 
   getBinaryString = vials => {
-      var binaryInteger = 0;
-      for (var i = 0; i< vials.length; i++) {
+      let binaryInteger = 0;
+      for (let i = 0; i< vials.length; i++) {
           binaryInteger += this.control[vials[i]];
       }
       return binaryInteger.toString(2);
@@ -205,36 +207,36 @@ export default class Setup extends Component<Props> {
   };
 
   onSelectNewCal = (parameter, filenames) => {
-    if (parameter == 'od'){
+    if (parameter === 'od'){
       this.props.socket.emit("setactivecal", {'calibration_names': filenames});
       this.setState({showRawOD: false});
       this.handleRawData(this.state.rawVialData, false, this.state.showRawTemp)
     }
-    if (parameter == 'temp'){
+    if (parameter === 'temp'){
       this.props.socket.emit("setactivecal", {'calibration_names': filenames});
       this.setState({showRawTemp: false});
       this.handleRawData(this.state.rawVialData, this.state.showRawOD, false)
     }
-    if (parameter == 'pump') {
+    if (parameter === 'pump') {
       this.props.socket.emit("setactivecal", {'calibration_names': filenames});
     }
-    if (parameter == 'rawod'){
+    if (parameter === 'rawod'){
       this.setState({showRawOD: !this.state.showRawOD});
       this.handleRawData(this.state.rawVialData, !this.state.showRawOD, this.state.showRawTemp)
     }
-    if (parameter == 'rawtemp'){
+    if (parameter === 'rawtemp'){
       this.setState({showRawTemp: !this.state.showRawTemp});
       this.handleRawData(this.state.rawVialData, this.state.showRawOD, !this.state.showRawTemp)
     }
   }
 
   onSubmitButton = (evolverComponent, value) => {
-    var vials = this.state.selectedItems.map(item => item.props.vial);
-    var evolverMessage = {};
+    const vials = this.state.selectedItems.map(item => item.props.vial);
+    let evolverMessage = {};
     evolverMessage = Array(16).fill("NaN")
-    if (evolverComponent == "pump") {
+    if (evolverComponent === "pump") {
       evolverMessage = Array(48).fill("--");
-      for (var i = 0; i < 48; i++) {
+      for (let i = 0; i < 48; i++) {
         if (value.in1) {
           evolverMessage[vials[i]] = value.time;
         }
@@ -247,8 +249,8 @@ export default class Setup extends Component<Props> {
       }
     }
     else {
-      for (var i = 0; i < vials.length; i++) {
-          if (evolverComponent == "temp") {
+      for (let i = 0; i < vials.length; i++) {
+          if (evolverComponent === "temp") {
             evolverMessage[vials[i]] = this.linearCalToRaw(value, this.state.tempCal.coefficients[vials[i]]).toFixed(0);
           }
           else {
@@ -257,27 +259,19 @@ export default class Setup extends Component<Props> {
       }
     }
 
-    this.setState({arduinoMessage:"Set \"" + evolverComponent + "\" to " + value + " Vials: " + vials});
+    this.setState({arduinoMessage: `Set "${evolverComponent}" to ${value} Vials: ${vials}`});
     console.log({param: evolverComponent, value: evolverMessage, immediate: true})
     this.props.socket.emit("command", {param: evolverComponent, value: evolverMessage, immediate: true});
     this.setState({command: {param: evolverComponent, value: evolverMessage}});
   };
 
-  sigmoidRawToCal = (value, cal) => {
-    return (cal[2] - ((Math.log10((cal[1] - cal[0]) / (value - cal[0]) - 1)) / cal[3]));
-  };
+  sigmoidRawToCal = (value, cal) => (cal[2] - ((Math.log10((cal[1] - cal[0]) / (value - cal[0]) - 1)) / cal[3]));
 
-  multidimRawToCal = (value1, value2, cal) => {
-    return cal[0] + cal[1] * value1 + cal[2] * value2 + cal[3] * value1 * value1 + cal[4] * value1 * value2 + cal[5] * value2 * value2;
-  };
+  multidimRawToCal = (value1, value2, cal) => cal[0] + cal[1] * value1 + cal[2] * value2 + cal[3] * value1 * value1 + cal[4] * value1 * value2 + cal[5] * value2 * value2;
 
-  linearRawToCal = (value, cal) => {
-    return (value * cal[0]) + cal[1];
-  };
+  linearRawToCal = (value, cal) => (value * cal[0]) + cal[1];
 
-  linearCalToRaw = (value, cal) => {
-    return (value - cal[1])/cal[0];
-  };
+  linearCalToRaw = (value, cal) => (value - cal[1])/cal[0];
 
   render() {
     return (

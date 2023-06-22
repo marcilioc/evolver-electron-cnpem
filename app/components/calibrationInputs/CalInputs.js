@@ -8,7 +8,6 @@ import KeyboardEventHandler from 'react-keyboard-event-handler';
 import Card from '@material-ui/core/Card';
 import { withStyles } from '@material-ui/core/styles';
 
-
 const densityButtons = Array.from(Array(16).keys())
 
 const cardStyles = theme => ({
@@ -33,10 +32,10 @@ class CalInput extends React.Component {
 
    componentDidUpdate(prevProps) {
      if (this.props.onInputsEntered !== prevProps.onInputsEntered) {
-       this.setState({ inputsLocked: this.props.onInputsEntered})
+       this.setState({ inputsLocked: this.props.onInputsEntered});
      }
      if (this.props.enteredValues !== prevProps.enteredValues) {
-       this.setState({ enteredValues: this.props.enteredValues})
+       this.setState({ enteredValues: this.props.enteredValues});
      }
      if (document.activeElement) {
           document.activeElement.blur();
@@ -52,39 +51,37 @@ class CalInput extends React.Component {
  };
 
  handleNumChange = (enteredValues)  => {
-   let newValues = this.state.enteredValues
-   newValues[this.state.numPadID] = enteredValues
+   let newValues = this.state.enteredValues;
+   newValues[this.state.numPadID] = enteredValues;
    this.props.onChangeValue(newValues);
-   this.setState({enteredValues: newValues})
+   this.setState({enteredValues: newValues});
  }
 
- clickBack = (event,value) => {
-   let nextID = this.state.numPadID
+ clickBack = (event, value) => {
+   let nextID = this.state.numPadID;
    if (this.state.numPadID == 0){
-     nextID = nextID + 15
+     nextID = nextID + 15;
    }
    else {
-     nextID = nextID - 1
+     nextID = nextID - 1;
    }
    this.setState({ numPadID: nextID});
  }
 
-  clickForward = (event,value) => {
-    let nextID = this.state.numPadID
+  clickForward = (event, value) => {
+    let nextID = this.state.numPadID;
     if (this.state.numPadID == 15){
-      nextID = nextID - 15
+      nextID = nextID - 15;
     }
     else {
-      nextID = nextID + 1
+      nextID = nextID + 1;
     }
     this.setState({ numPadID: nextID});
   }
 
-
   render() {
     const { open } = this.state;
     const { classes, theme } = this.props;
-
 
     return (
       <div>

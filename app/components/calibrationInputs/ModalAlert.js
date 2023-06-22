@@ -6,12 +6,9 @@ import { withStyles } from '@material-ui/core/styles';
 import Modal from 'react-responsive-modal';
 import styles from './modal-styling.css';
 
-
-
 const cardStyles = {
 
 };
-
 
 class ModalAlert extends React.Component {
   constructor(props) {
@@ -25,13 +22,13 @@ class ModalAlert extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (this.props.alertOpen !== prevProps.alertOpen) {
-      this.setState({ open: this.props.alertOpen})
+      this.setState({ open: this.props.alertOpen});
     }
     if (this.props.alertQuestion !== prevProps.alertQuestion) {
-      this.setState({ question: this.props.alertQuestion})
+      this.setState({ question: this.props.alertQuestion});
     }
     if (this.props.alertAnswers !== prevProps.alertAnswers) {
-      this.setState({ answers: this.props.alertAnswers})
+      this.setState({ answers: this.props.alertAnswers});
     }
   }
 
@@ -47,7 +44,6 @@ class ModalAlert extends React.Component {
     this.props.onAlertAnswer(answer);
   }
 
-
   render() {
     const { open } = this.state;
 
@@ -56,7 +52,7 @@ class ModalAlert extends React.Component {
         <Modal
           open={open}
           closeOnEsc={false}
-          closeOnOverlayClick={false}             
+          closeOnOverlayClick={false}
           onClose={this.onCloseModal}
           center
           classNames={{

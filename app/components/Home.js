@@ -9,22 +9,25 @@ import RelaunchModal from './RelaunchModal';
 
 const fs = require('fs');
 const Store = require('electron-store');
-
-const store = new Store();
-
 const { remote } = require('electron');
 
+const store = new Store();
 const { app } = remote;
+
+process.env.SOCKET_PORT = 18092;
+
+let ip;
+let socketString;
 
 type Props = {};
 
 function setupLogger() {
-  var currentDate = new Date();
-  var date = currentDate.getDate();
-  var month = currentDate.getMonth(); //Be careful! January is 0 not 1
-  var year = currentDate.getFullYear();
-  var dateString = date + "-" +(month + 1) + "-" + year;
-  var logPath =  app.getPath('userData') + '/logs/'+ dateString + '.log'
+  const currentDate = new Date();
+  const date = currentDate.getDate();
+  const month = currentDate.getMonth(); // Be careful! January is 0 not 1
+  const year = currentDate.getFullYear();
+  const dateString = `${date}-${(month + 1)}-${year}`;
+  const logPath =  `${app.getPath('userData')}/logs/${dateString}.log`;
   console.log(logPath)
 
   log4js.configure({
@@ -39,7 +42,7 @@ function setupLogger() {
 }
 
 function isPi() {
-  var pi_module_no = [
+  const pi_module_no = [
     'BCM2708',
     'BCM2709',
     'BCM2710',
@@ -47,7 +50,7 @@ function isPi() {
     'BCM2837B0'
   ];
 
-  var cpuInfo;
+  let cpuInfo;
   try {
     cpuInfo = fs.readFileSync('/proc/cpuinfo', { encoding: 'utf8' });
     console.log(cpuInfo)
@@ -55,7 +58,7 @@ function isPi() {
     return false;
   }
 
-  var model = cpuInfo
+  const model = cpuInfo
     .split('\n')
     .map(line => line.replace(/\t/g, ''))
     .filter(line => line.length > 0)
@@ -63,23 +66,23 @@ function isPi() {
     .map(pair => pair.map(entry => entry.trim()))
     .filter(pair => pair[0] === 'Hardware')
 
-  if(!model || model.length == 0) {
+  if(!model || model.length === 0) {
     return false;
   }
 
-  var number =  model[0][1];
+  const number =  model[0][1];
   return pi_module_no.indexOf(number) > -1;
 }
 
 function checkExpts() {
-  if (store.get('first_visit') == true && store.get('running_expts').length > 0) {
+  if (store.get('first_visit') === true && store.get('running_expts').length > 0) {
     return true;
-  } else {
-    return false;
-  };
+  }
 };
 
 export default class Home extends Component<Props> {
+  props: Props;
+
   constructor(props) {
       super(props);
       this.state = {
@@ -91,20 +94,20 @@ export default class Home extends Component<Props> {
       }
       else {
         if (!isPi() && store.has('activeEvolver')){
-          var ip = store.get('activeEvolver').value;
+          ip = store.get('activeEvolver').value;
           // ipcRenderer.send('active-ip', ip)
-	        var socketString = "http://" + ip + ":8081/dpu-evolver";
+	        socketString = `http://${ip}:8081/dpu-evolver`;
           this.state.socket = io.connect(socketString, {reconnect:true});
           this.state.evolverIp = ip;
         } else {
             this.state.socket = io.connect(socketString, {reconnect:true});
             this.state.evolverIp = ip;
         }
-        this.state.socket.on('reconnect', function(){console.log("Reconnected evolver")});
+        this.state.socket.on('reconnect', () => console.log("Reconnected evolver"));
       }
 
-      this.state.socket.on('connect', function(){console.log("Connected evolver");}.bind(this));
-      this.state.socket.on('disconnect', function(){console.log("Disconnected evolver")});
+      this.state.socket.on('connect', () => console.log("Connected evolver"));
+      this.state.socket.on('disconnect', () => console.log("Disconnected evolver"));
 
       if (this.props.logger){
         this.logger = this.props.logger;
@@ -114,10 +117,9 @@ export default class Home extends Component<Props> {
       this.logger.info("Routed to Home Page.");
   }
 
-  props: Props;
 
   componentDidMount() {
-    if (store.get('first_visit') == null) {
+    if (store.get('first_visit') === null) {
       store.set('first_visit', true);
     } else {
       store.set('first_visit', false);
@@ -131,41 +133,41 @@ export default class Home extends Component<Props> {
   }
 
   handleSelectEvolver = (selectedEvolver) => {
-    var socketString = "http://" + selectedEvolver.value + ":8081/dpu-evolver";
-    var socket = io.connect(socketString, {reconnect:true});
-    this.state.socket.on('connect', function(){console.log("Connected evolver")});
-    this.state.socket.on('disconnect', function(){console.log("Disconnected evolver")});
-    this.state.socket.on('reconnect', function(){console.log("Reconnected evolver")});
-    this.setState({'socket': socket, 'evolverIp': selectedEvolver.value})
-    store.set('activeEvolver', selectedEvolver)
-  }
+    socketString = `http://${selectedEvolver.value}:8081/dpu-evolver`;
+    const socket = io.connect(socketString, {reconnect:true});
+    this.state.socket.on('connect', () => console.log("Connected evolver"));
+    this.state.socket.on('disconnect', () => console.log("Disconnected evolver"));
+    this.state.socket.on('reconnect', () => console.log("Reconnected evolver"));
+    this.setState({'socket': socket, 'evolverIp': selectedEvolver.value});
+    store.set('activeEvolver', selectedEvolver);
+  };
 
   handleYes = () => {
-    this.state.socket.send('kill-expts', {relaunch: true});
+    this.state.socket.emit('kill-expts', {relaunch: true});
     this.setState({alertOpen: false,});
     store.set('first_visit', false);
-  }
+  };
 
   handleNo = () => {
-    this.state.socket.send('kill-expts', {relaunch: false})
+    this.state.socket.emit('kill-expts', {relaunch: false})
     this.setState({alertOpen: false});
     store.set('first_visit', false);
   };
 
   render() {
-    var links = (isPi() ? <div><Link to={{pathname:routes.SETUP, socket:this.state.socket, logger:this.logger}}><button className = "btn btn-lg homeButtons">SETUP</button></Link></div> :
+    const links = (isPi() ? <div><Link to={{pathname:routes.SETUP, socket:this.state.socket, logger:this.logger}}><button className = "btn btn-lg homeButtons">SETUP</button></Link></div> :
       <div>
         <Link to={{pathname:routes.SETUP, socket:this.state.socket, logger:this.logger}}><button className = "btn btn-lg homeButtons">SETUP</button></Link>
         <Link to={{pathname:routes.CALMENU, socket:this.state.socket, logger:this.logger}}><button className = "btn btn-lg homeButtons">CALIBRATIONS</button></Link>
         <Link to={{pathname:routes.EXPTMANAGER, socket:this.state.socket, logger:this.logger, evolverIp: this.state.evolverIp}}><button className = "btn btn-lg homeButtons">EXPT MANAGER</button></Link>
       </div>)
 
-    var foundExpts = [];
-    for (var i = 0; i < store.get('running_expts').length; i++) {
-      var temp = store.get('running_expts')[i].path;
+    const foundExpts = [];
+    for (let i = 0; i < store.get('running_expts').length; i++) {
+      const temp = store.get('running_expts')[i].path;
       foundExpts.push(temp.split('/').pop());
     }
-    var question = `The following experiments were not properly ended prior to opening the application. Would you like to continue them?`;
+    const question = 'The following experiments were not properly ended prior to opening the application. Would you like to continue them?';
 
     return (
       <div>

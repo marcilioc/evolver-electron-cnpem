@@ -7,12 +7,9 @@ import Modal from 'react-responsive-modal';
 import styles from './modal-styling.css';
 import routes from '../../constants/routes.json';
 
-
-
 const cardStyles = {
 
 };
-
 
 class ModalClone extends React.Component {
   constructor(props) {

@@ -1,31 +1,30 @@
-import React, { Component } from 'react'
+import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import VialItem from './VialItem';
 import VialOutline from './VialOutline';
 
 function zipValues(odState, vialOpacities, generalOpacity, valueInputs, vialLabels) {
-  let vialOpacitiesNew = []
-  let generalOpacityNew = []
-  let valueInputsNew = []
-  let vialLabelsNew = []
+  let vialOpacitiesNew = [];
+  let generalOpacityNew = [];
+  let valueInputsNew = [];
+  let vialLabelsNew = [];
 
-  var i;
+  let i;
   for (i = 0; i < odState.length; i++) {
-    valueInputsNew[i] = valueInputs[odState[i]]
-    vialOpacitiesNew[i] = vialOpacities[odState[i]]
-    vialLabelsNew[i] = vialLabels[odState[i]]
+    valueInputsNew[i] = valueInputs[odState[i]];
+    vialOpacitiesNew[i] = vialOpacities[odState[i]];
+    vialLabelsNew[i] = vialLabels[odState[i]];
 
     if ( isNaN(valueInputsNew[i]) && (typeof valueInputsNew[i] !== 'string')) {
       generalOpacityNew[i] = 0;
     }
     else{
-      generalOpacityNew[i] = generalOpacity[odState[i]]
+      generalOpacityNew[i] = generalOpacity[odState[i]];
     }
   }
 
   let zippedSamples = odState.map((x, i) => [x, vialOpacitiesNew[i], generalOpacityNew[i], valueInputsNew[i], vialLabelsNew[i]]);
-
-  return zippedSamples
+  return zippedSamples;
 }
 //generalOpacity = newState.map((x, i) => x[2])
 
@@ -41,7 +40,7 @@ function unzipValues(zippedArray) {
   let valueInputsNew = []
   let vialLabelsNew = []
 
-  var i;
+  let i;
   for (i = 0; i < odState.length; i++) {
     vialOpacitiesNew[odState[i]] = vialOpacities[i]
     generalOpacityNew[odState[i]] = generalOpacity[i]
@@ -49,9 +48,8 @@ function unzipValues(zippedArray) {
     vialLabelsNew[odState[i]] = vialLabels[i]
   }
 
-  return [ odState, vialOpacitiesNew, generalOpacityNew, valueInputsNew, vialLabelsNew]
+  return [ odState, vialOpacitiesNew, generalOpacityNew, valueInputsNew, vialLabelsNew];
 }
-
 
 export default class ODcalGUI extends Component<Props> {
   constructor(props) {
@@ -165,7 +163,7 @@ export default class ODcalGUI extends Component<Props> {
         outputs = <div></div>
     }
     else {
-        outputs = 
+        outputs =
                       <div>
         <VialItem
           currentValue = {this.state.zipped}

@@ -38,7 +38,6 @@ const xAxisNameOD = 'OPTICAL DENSITY';
 const xAxisNameTemp = 'TEMPERATURE (C)';
 const filesToCopy = ['custom_script.py', 'eVOLVER.py', 'nbstreamreader.py', 'pump_cal.txt', 'eVOLVER_parameters.json'];
 
-
 class Graph extends React.Component {
   constructor(props) {
     super(props);
@@ -68,13 +67,13 @@ class Graph extends React.Component {
       deleteExptAlertDirections: "",
       cloneOpen: false,
       cloneDirections: 'Enter a new experiment name:',
-      exptLocation: app.getPath('userData') 
+      exptLocation: app.getPath('userData')
     };
-    
+
     if (store.get('exptLocation')) {
         this.setState({exptLocation: store.get('exptLocation')});
     }
-    
+
     ipcRenderer.on('running-expts', (event, arg) => {
       var disablePlay = false;
       var changeNameDisabled = false;
@@ -87,7 +86,7 @@ class Graph extends React.Component {
       this.setState({disablePlay: disablePlay, changeNameDisabled: changeNameDisabled});
     });
 
-    ipcRenderer.send('running-expts');    
+    ipcRenderer.send('running-expts');
   }
 
   componentDidMount() {
@@ -191,54 +190,54 @@ class Graph extends React.Component {
   handleActivePlot = (event) => {
     this.setState({activePlot: event})
   }
-  
+
   setAllGraphs = () => {
     this.setState({activePlot: 'ALL'});
   }
-  
+
   handlePlay = (exptToPlay) => {
       ipcRenderer.send('start-script', exptToPlay);
       this.setState({disablePlay:true});
   }
-  
+
   onStop = (exptToStop) => {
       ipcRenderer.send('stop-script', exptToStop);
   }
-  
+
   handleReset = (exptToStop) => {
       var directions = "Are you sure you want to reset the experiment " + this.state.exptName + "?";
       this.setState({deleteExptAlertDirections: directions}, function() {
           this.setState({deleteExptAlertOpen: true});
       }.bind(this));
   }
-  
+
   deleteExptAlertAnswer = (response) => {
       this.setState({deleteExptAlertOpen: false});
       if (response) {
           if (this.state.disablePlay) {
             ipcRenderer.send('stop-script', this.state.exptDir);
-          }          
+          }
           if (fs.existsSync(path.join(this.state.exptDir, 'data'))) {
-            rimraf.sync(path.join(this.state.exptDir, 'data'));              
-          }          
+            rimraf.sync(path.join(this.state.exptDir, 'data'));
+          }
       }
   }
-  
+
   cloneExpt = () => {
       this.setState({cloneOpen: true});
   }
-  
+
   onResumeClone = (exptName) => {
       this.setState({cloneOpen: false});
         if (exptName !== false) {
           this.createNewExperiment(exptName);
         }
   }
-  
+
   handleDataZoom = () => {
-      this.setState({timePlotted:'None'});      
+      this.setState({timePlotted:'None'});
   }
-  
+
     createNewExperiment = (exptName) => {
         var newDir = path.join(this.state.exptLocation, 'experiments', exptName);
         var oldDir = path.join(this.state.exptDir);
@@ -251,11 +250,11 @@ class Graph extends React.Component {
             fs.copyFileSync(path.join(oldDir, filename), path.join(newDir, filename));
           }
         });
-    }  
+    }
 
   render() {
     const { classes } = this.props;
-      var backButton = this.state.activePlot == 'ALL' ? 
+      var backButton = this.state.activePlot == 'ALL' ?
         <Link className="backHomeBtn" style={{zIndex: '10', position: 'absolute', top: '5px', left: '-20px'}} id="experiments" to={{pathname:routes.EXPTMANAGER, socket: this.props.socket, logger:this.props.logger, evolverIp: this.props.evolverIp}}><FaArrowLeft/></Link> :
         <button className="backHomeBtn" style={{zIndex: '10', position: 'absolute', top: '3px', left: '-55px'}}onClick={this.setAllGraphs}><FaArrowLeft/></button>;
       var exptName = path.basename(this.props.exptDir);
@@ -289,7 +288,7 @@ class Graph extends React.Component {
         <button class="ebfe" data-tip="Clone this experiment, creating a new one with identical configuration" onClick={() => this.cloneExpt()}><FaCopy size={25}/></button>
         </div>;
 
-    return ( 
+    return (
      <div>
         {backButton}
         <h4 className="graphTitle">{exptName}</h4>
@@ -313,7 +312,7 @@ class Graph extends React.Component {
             value={this.state.ymax}
             onSelectRadio={this.handleYmax}/>
         </div>
-         {exptControlButtons}       
+         {exptControlButtons}
         <VialMenu onSelectGraph={this.handleActivePlot}/>
         <div className="dataActionButtons">
           <button className={"dataActionButton"} onClick={this.downloadData}>DOWNLOAD</button>

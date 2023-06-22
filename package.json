@@ -96,7 +96,7 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "www.fynchbio.com"
+    "url": "http://www.fynchbio.com"
   },
   "keywords": [
     "electron",
@@ -191,7 +191,6 @@
     "rimraf": "^2.6.2",
     "sass-loader": "^7.0.3",
     "sinon": "^6.1.4",
-    "socket.io-client": "^2.2.0",
     "spectron": "^3.8.0",
     "style-loader": "^0.21.0",
     "stylelint": "^9.4.0",
@@ -226,6 +225,7 @@
     "log4js": "^4.0.2",
     "md5-file": "5.0.0",
     "moment": "^2.24.0",
+    "node-static": "^0.7.11",
     "parse-filepath": "^1.0.2",
     "prop-types": "^15.7.2",
     "ps-node": "^0.1.6",
@@ -252,7 +252,7 @@
     "react-tooltip": "4.2.17",
     "redux": "^4.0.0",
     "redux-thunk": "^2.3.0",
-    "socket.io-client": "^2.2.0",
+    "socket.io-client": "^4.6.2",
     "source-map-support": "^0.5.6",
     "tail": "^2.2.0",
     "zip-dir": "2.0.0"

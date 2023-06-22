@@ -4,7 +4,6 @@ import { withStyles } from '@material-ui/core/styles';
 import Slider from '@material-ui/lab/Slider';
 import Card from '@material-ui/core/Card';
 
-
 const styles = {
   root: {
     alignItems: 'center',

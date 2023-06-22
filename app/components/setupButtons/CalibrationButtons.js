@@ -8,7 +8,6 @@ import Typography from '@material-ui/core/Typography';
 import styles from './modal-styling.css';
 import Modal from 'react-responsive-modal';
 
-
 const materialStyles = {
   card: {
     width: 450,
@@ -25,7 +24,6 @@ const materialStyles = {
     textAlign: 'left'
   },
 };
-
 
 class CalibrationButtons extends React.Component {
   constructor(props) {

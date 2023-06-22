@@ -6,12 +6,9 @@ import { withStyles } from '@material-ui/core/styles';
 import Modal from 'react-responsive-modal';
 import styles from './modal-styling.css';
 
-
-
 const cardStyles = {
 
 };
-
 
 class NewFileModal extends React.Component {
   constructor(props) {
@@ -29,7 +26,7 @@ class NewFileModal extends React.Component {
       this.setState({ open: this.props.alertOpen})
     }
   }
-  
+
   componentWillReceiveProps(nextProps) {
       this.setState({open:nextProps.alertOpen});
   }
@@ -47,7 +44,7 @@ class NewFileModal extends React.Component {
     this.props.onAlertAnswer(this.state.value);
     this.setState({open: false, value: ''});
   }
-  
+
   handleChange = (event) => {
       this.setState({value: event.target.value});
   }
@@ -60,7 +57,7 @@ class NewFileModal extends React.Component {
         <Modal
           open={open}
           closeOnEsc={false}
-          closeOnOverlayClick={false}             
+          closeOnOverlayClick={false}
           onClose={this.onCloseModal}
           onRequestClose={this.onCloseModal}
           center
@@ -74,7 +71,7 @@ class NewFileModal extends React.Component {
                 {this.state.question}
               </p>
               <div className='alertBtnRow' style={{margin: '0px 30px 0px 30px'}}>
-                  <input                    
+                  <input
                     className={styles.alertInput}
                     type="text"
                     value={this.state.value}
@@ -86,7 +83,7 @@ class NewFileModal extends React.Component {
               onClick={this.handleAnswer}
               className={styles.alertBtns}>
               Submit
-              </button>              
+              </button>
             </div>
           </Modal>
       </div>

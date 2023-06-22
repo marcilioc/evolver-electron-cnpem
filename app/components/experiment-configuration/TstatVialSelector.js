@@ -5,7 +5,6 @@ import { withStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 import ReactTooltip from 'react-tooltip';
 
-
 const disabledVial = []
 
 function isDisabled(currentVial) {
@@ -22,7 +21,6 @@ function ActiveButtons(state) {
   }
   return null;
 }
-
 
 const styles = {
   card: {
@@ -56,7 +54,7 @@ const LabelCStat = ({ selecting, selected, vial, rate, temp, stir, startTime, st
     <span className="temp-label"> {`${temp}`} </span>
     <span className="stir-label"> {`${stir}`} </span><br/>
     <span className="startTime-label"> {`${startTime}`} </span><br/>
-    <span className="startOD-label"> {`${startOD}`} </span><br/>            
+    <span className="startOD-label"> {`${startOD}`} </span><br/>
   </div>
 )
 
@@ -184,8 +182,6 @@ const AlbumGrowthCurve = ({
 const SelectableAlbumTStat = createSelectable(AlbumTStat);
 const SelectableAlbumCStat = createSelectable(AlbumCStat);
 const SelectableAlbumGrowthCurve = createSelectable(AlbumGrowthCurve);
-
-
 
 class TstatVialSelector extends Component<Props>  {
   state = {

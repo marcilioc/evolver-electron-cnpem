@@ -40,12 +40,15 @@ const { exec } = require("child_process");
 const { dialog } = require('electron')
 const { PythonShell } = require('python-shell');
 
+const { fork } = require('child_process')
+
 const store = new Store({
   defaults:{
     running_expts: [],
     first_visit: null
   }
 });
+
 const backgroundShells = [];
 const tasks = [];
 const available = [];
@@ -130,7 +133,7 @@ function killExpts(relaunch) {
     running_expts_copy.push(store.get('running_expts')[i]);
   }
   store.set('running_expts', []);
-  for (var i = 0; i < running_expts_copy.length; i++) {
+  for (let i = 0; i < running_expts_copy.length; i++) {
     ps.lookup({pid: running_expts_copy[i].pid}, (err, resultList) => {
       if (err) {
         throw new Error(err);
@@ -244,7 +247,7 @@ function createWindow () {
     mainWindow.setFullScreen(true);
   }
   mainWindow.setMenu(null);
-  mainWindow.loadURL(`file://${__dirname}/app.html`);
+  mainWindow.loadFile(`${__dirname}/app.html`);
 
   // Uncomment to view dev tools on startup.
   // mainWindow.webContents.openDevTools();

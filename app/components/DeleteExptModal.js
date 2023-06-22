@@ -1,18 +1,14 @@
 // @flow
 import React from 'react';
-import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import Modal from 'react-responsive-modal';
 import styles from './modal-styling.css';
 import routes from '../constants/routes.json';
 
-
-
 const cardStyles = {
 
 };
-
 
 class DeleteExptModal extends React.Component {
   constructor(props) {
@@ -27,14 +23,14 @@ class DeleteExptModal extends React.Component {
     };
   }
 
+  componentWillReceiveProps(nextProps) {
+    this.setState({open:nextProps.alertOpen, question: this.props.alertQuestion});
+  }
+
   componentDidUpdate(prevProps) {
     if (this.props.alertOpen !== prevProps.alertOpen) {
       this.setState({ open: this.props.alertOpen, question: this.props.alertQuestion})
     }
-  }
-
-  componentWillReceiveProps(nextProps) {
-      this.setState({open:nextProps.alertOpen, question: this.props.alertQuestion});
   }
 
   onOpenModal = () => {
@@ -53,7 +49,7 @@ class DeleteExptModal extends React.Component {
 
   render() {
     const { open } = this.state;
-    var confirmButton;
+    let confirmButton;
     if (this.state.useLink) {
       confirmButton = <Link className="cloneButton" id="clone" to={{pathname: routes.EXPTMANAGER}}><button
               onClick={() => this.handleAnswer()}
