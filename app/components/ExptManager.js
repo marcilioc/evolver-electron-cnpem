@@ -12,8 +12,9 @@ import ModalReset from './python-shell/ModalReset';
 import routes from '../constants/routes.json';
 
 const { ipcRenderer } = require('electron');
-const remote = require('electron').remote;
-const app = remote.app;
+const { remote } = require('electron');
+
+const { app } = remote;
 const http = require('https');
 const Store = require('electron-store');
 const { dialog } = require('electron').remote
@@ -42,7 +43,7 @@ const styles = {
 };
 
 function startScript(exptDir) {
-    this.state.socket.emit('start-script', exptDir);
+    ipcRenderer.send('start-script', exptDir);
 };
 
 class ExptManager extends React.Component {
@@ -189,7 +190,7 @@ class ExptManager extends React.Component {
     return (
       <div>
         <h2 className="managerTitle"> eVOLVER Scripts </h2>
-        <div className="directoryDiv"><span style={{fontWeight: "bold"}}>Expt Directory: </span><span className="expt-dir-text" style={{color:"#f58245"}}>{path.join(this.state.exptLocation, this.state.scriptDir)}</span><button class="expt-dir-btn" data-tip="Change Expt Directory." onClick={this.changeExptDirectory}><FaPen size={15}/></button></div>
+        <div className="directoryDiv"><span style={{fontWeight: "bold"}}>Expt Directory: </span><span className="expt-dir-text" style={{color:"#f58245"}}>{path.join(this.state.exptLocation, this.state.scriptDir)}</span><button className="expt-dir-btn" data-tip="Change Expt Directory." onClick={this.changeExptDirectory}><FaPen size={15}/></button></div>
         <Card classes={{root:classes.cardRoot}} className={classes.cardScript}>
           <ScriptFinder subFolder={this.state.scriptDir}
             isScript= {true}

@@ -33,8 +33,6 @@ const styles = theme =>  ({
   },
 });
 
-
-
 class SetupLog extends React.Component {
   constructor(props) {
     super(props);
@@ -45,10 +43,12 @@ class SetupLog extends React.Component {
       activeODCal:this.props.activeODCal,
       activeTempCal:this.props.activeTempCal
     };
-    this.props.socket.on('connect', function() {this.addLoggedText('eVOLVER Connected', 'notification')}.bind(this))
-    this.props.socket.on('disconnect', function() {this.addLoggedText('eVOLVER Disconnected', 'notification')}.bind(this))
-
-    this.props.socket.on('commandbroadcast', function(response) {this.addLoggedText(response, 'response')}.bind(this))
+    this.props.socket.on('connect', () => {this.state.addLoggedText('eVOLVER Connected', 'notification')});
+    this.props.socket.on('disconnect', () => {this.state.addLoggedText('eVOLVER Disconnected', 'notification')});
+    this.props.socket.on('commandbroadcast', (response) => {
+      console.log(response);
+      this.state.addLoggedText(response, 'response');
+    });
   }
 
   componentWillUnmount() {
@@ -82,9 +82,9 @@ class SetupLog extends React.Component {
 
   addLoggedText = (data, inputType) => {
     var outputString;
-    if (inputType == 'command'){
+    if (inputType === 'command'){
       outputString = 'Command: ' + data['param'] + ' command sent.'
-    } else if (inputType == 'response'){
+    } else if (inputType === 'response'){
       var triggeredVials = '';
       var value = '';
       var in1 = false;
@@ -92,24 +92,24 @@ class SetupLog extends React.Component {
       var efflux = false;
       var time_ON = 0;
 
-      if (data['param'] == 'pump'){
+      if (data['param'] === 'pump'){
         console.log(data)
-        var vials = data.value;
-        for (var i = 0; i < vials.length; i++) {
-          if ((vials[i] != '--') && (i <= 15)){
+        const vials = data.value;
+        for (let i = 0; i < vials.length; i++) {
+          if ((vials[i] !== '--') && (i <= 15)){
             time_ON = vials[i];
             triggeredVials = triggeredVials + i + ',';
           };
-          if ((vials[i] != '--') && (i <= 15)){in1 = true};
-          if ((vials[i] != '--') && (i > 15) && (i <= 31)){efflux = true};
-          if ((vials[i] != '--') && (i > 31) && (i <= 47)){in2 = true};
+          if ((vials[i] !== '--') && (i <= 15)){in1 = true};
+          if ((vials[i] !== '--') && (i > 15) && (i <= 31)){efflux = true};
+          if ((vials[i] !== '--') && (i > 31) && (i <= 47)){in2 = true};
         }
         triggeredVials = triggeredVials.slice(0, -1);
 
         if (in1){value = value + 'in1, '};
         if (in2){value = value + 'in2, '};
         if (efflux){value = value + 'efflux, '};
-        if (value == ''){
+        if (value === ''){
           outputString= 'Response: Nothing Changed, no pumps selected'
         } else {
           value = value.slice(0, -2);
@@ -122,7 +122,7 @@ class SetupLog extends React.Component {
         for (var i = 0; i < vials.length; i++) {
           if (vials[i] !== 'NaN'){
             triggeredVials = triggeredVials + i + ',';
-            if (data['param'] == "temp"){
+            if (data['param'] === "temp"){
               value.push(data['value'][i]);// + '\u00b0C');
             } else {
               value.push(data['value'][i]);
@@ -133,11 +133,11 @@ class SetupLog extends React.Component {
         outputString = 'Response: Set ' + data['param'] + ' to ' + value + ' for vials (' + triggeredVials + ')'
       }
 
-      if(triggeredVials == ''){
+      if(triggeredVials === ''){
         outputString= 'Response: Nothing Changed, no vials selected'
       }
 
-    } else if (inputType == 'notification'){
+    } else if (inputType === 'notification'){
       outputString = data;
     }
     var linesLogged = this.state.linesLogged +1;

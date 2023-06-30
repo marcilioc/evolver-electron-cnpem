@@ -2,12 +2,9 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import {FaArrowLeft} from 'react-icons/fa';
-import { LeakAddTwoTone } from '@material-ui/icons';
 import routes from '../constants/routes.json';
 import data from './sample-data'
 import VialSelector from './VialSelector';
-import Navbar from './Navbar';
-import SetupButtons from './setupButtons/SetupButtons';
 import ButtonCards from './setupButtons/ButtonCards';
 import SetupLog from './setupButtons/SetupLog';
 
@@ -38,14 +35,19 @@ export default class Setup extends Component<Props> {
             strain: ["FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100"]
         };
       this.control = Array.from(new Array(32).keys()).map(item => Math.pow(2,item));
+
+      // Request calibration parameters from server
       this.props.socket.emit('getactivecal', {});
       this.props.socket.emit('getfitnames', {});
+
+      // Receive data of eVOLVER physical changes
       this.props.socket.on('broadcast', (response) => this.handleRawData(this.handlePiIncoming(response.data), this.state.showRawOD, this.state.showRawTemp));
 
+      // Receive calibration parameters from server
       this.props.socket.on('fitnames', (response) => {
-        var odCalFiles = [];
-        var tempCalFiles = [];
-        var pumpCalFiles = [];
+        const odCalFiles = [];
+        const tempCalFiles = [];
+        const pumpCalFiles = [];
         for (let i = 0; i < response.length; i++) {
             if (response[i].calibrationType === "od") {
               odCalFiles.push(response[i].name);
@@ -57,13 +59,13 @@ export default class Setup extends Component<Props> {
               pumpCalFiles.push(response[i].name);
             }
         }
-        this.setState({odCalFiles: odCalFiles, tempCalFiles: tempCalFiles, pumpCalFiles: pumpCalFiles})
+        this.setState({odCalFiles, tempCalFiles, pumpCalFiles});
       });
 
       this.props.socket.on('activecalibrations', (response) => {
-        var activeODCal;
-        var activeTempCal;
-        var activePumpCal;
+        let activeODCal;
+        let activeTempCal;
+        let activePumpCal;
         for (let i = 0; i < response.length; i++) {
           for (let j = 0; j < response[i].fits.length; j++) {
             if (response[i].fits[j].active) {
@@ -83,7 +85,7 @@ export default class Setup extends Component<Props> {
         store.set('activeODCal', activeODCal.name);
         store.set('activeTempCal', activeTempCal.name);
         store.set('activePumpCal', activePumpCal.name);
-        });
+      });
     }
 
   componentDidMount() {

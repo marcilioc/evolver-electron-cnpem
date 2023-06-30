@@ -93,19 +93,19 @@ const styles = theme => ({
 
 function ActiveButtons(props) {
   const currentTag = props.currentTag;
-  if (currentTag == 'stir') {
+  if (currentTag === 'stir') {
     return <StirSlider onSubmitButton={props.onSubmitButton}/>;
   }
-  if (currentTag == 'temp') {
+  if (currentTag === 'temp') {
     return <TempSlider onSubmitButton={props.onSubmitButton}/>;
   }
-  if (currentTag == 'pump') {
+  if (currentTag === 'pump') {
     return <FluidicsButtons onSubmitButton={props.onSubmitButton}/>;
   }
-  if (currentTag == 'light') {
+  if (currentTag === 'light') {
     return <LightButtons onSubmitButton={props.onSubmitButton}/>;
   }
-  if (currentTag == 'calibrate') {
+  if (currentTag === 'calibrate') {
     return <CalibrationButtons onSelectNewCal={props.onSelectNewCal}
               tempCalFiles = {props.tempCalFiles}
               odCalFiles = {props.odCalFiles}
@@ -201,7 +201,7 @@ class SwipeableTextMobileStepper extends React.Component {
           axis={theme.direction === 'rtl' ? 'x-reverse' : 'x'}
           index={activeStep}
           onChangeIndex={this.handleStepChange}
-          disabled= {true}
+          disabled = {true}
         >
             {tutorialSteps.map((step, index) => (
               <Card key={step.label} className={classes.card}>

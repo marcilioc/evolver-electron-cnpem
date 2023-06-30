@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom'; 
 import CircularProgress from '@material-ui/core/CircularProgress';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -74,6 +74,5 @@ class VialOutline extends React.Component {
     );
   }
 }
-
 
 export default withStyles(styles, { withTheme: true })(VialOutline);

@@ -1,8 +1,8 @@
 import React from 'react';
 
 export default class Circle extends React.Component {
-  render() {  	
-    var circleStyle = {
+  render() {
+    const circleStyle = {
       display:"inline-block",
       backgroundColor: this.props.bgColor,
       borderRadius: "50%",
@@ -11,7 +11,7 @@ export default class Circle extends React.Component {
       margin:'0px 0px 0px 30px'
     };
     return (
-      <div style={circleStyle}></div>
+      <div style={circleStyle} />
     );
   }
 }

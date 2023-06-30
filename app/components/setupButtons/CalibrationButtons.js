@@ -109,13 +109,13 @@ class CalibrationButtons extends React.Component {
 
   selectNewCal = (index) => {
     this.setState({ open: false });
-    if (this.state.modalParameter == 'od') {
+    if (this.state.modalParameter === 'od') {
       this.props.onSelectNewCal(this.state.modalParameter, [this.state.activePumpCal, this.state.activeTempCal, this.state.modalFiles[index]]);
     }
-    else if (this.state.modalParameter == 'temp') {
+    else if (this.state.modalParameter === 'temp') {
       this.props.onSelectNewCal(this.state.modalParameter, [this.state.activePumpCal, this.state.activeODCal, this.state.modalFiles[index]]);
     }
-    else if (this.state.modalParameter == 'pump') {
+    else if (this.state.modalParameter === 'pump') {
       this.props.onSelectNewCal(this.state.modalParameter, [this.state.activeTempCal, this.state.activeODCal, this.state.modalFiles[index]]);
     }
   }

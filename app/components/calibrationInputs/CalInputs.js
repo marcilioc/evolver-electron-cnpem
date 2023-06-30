@@ -51,7 +51,7 @@ class CalInput extends React.Component {
  };
 
  handleNumChange = (enteredValues)  => {
-   let newValues = this.state.enteredValues;
+   const newValues = this.state.enteredValues;
    newValues[this.state.numPadID] = enteredValues;
    this.props.onChangeValue(newValues);
    this.setState({enteredValues: newValues});

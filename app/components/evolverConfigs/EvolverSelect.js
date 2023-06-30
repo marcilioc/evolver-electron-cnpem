@@ -123,7 +123,7 @@ class EvolverSelect extends React.Component {
   }
 
   scanEvolvers = () => {
-    for (var i = 0; i < this.state.registeredEvolvers.length; i++) {
+    for (let i = 0; i < this.state.registeredEvolvers.length; i++) {
       this.request = isPortReachable(8081, {host: this.state.registeredEvolvers[i].value})
       .then(this.callback_scanEvolvers.bind(null, i).bind(this))};
   }
@@ -139,7 +139,7 @@ class EvolverSelect extends React.Component {
       } else {
         registeredEvolvers[index]['statusColor'] = '#DC143C';
       }
-      if (registeredEvolvers[index]['value'] == this.state.selectedOption['value']){
+      if (registeredEvolvers[index]['value'] === this.state.selectedOption['value']){
         if (state){
           selectedOption['statusColor'] = '#32CD32';
         } else {
@@ -152,8 +152,8 @@ class EvolverSelect extends React.Component {
   }
 
   updateRegistry = () => {
-    var registeredEvolvers = store.get('registeredEvolvers')
-    var activeEvolver;
+    const registeredEvolvers = store.get('registeredEvolvers')
+    let activeEvolver;
     if (store.has('activeEvolver')){
       activeEvolver = store.get('activeEvolver')
     } else {
