@@ -38,7 +38,6 @@ class SocketConnection extends React.Component {
       this.socket = this.props.socket;
     }
     else {
-
       // this.socket = io.connect("http://localhost:8081/dpu-evolver", {reconnect:true});
       this.socket = io("http://192.168.1.4:8081/dpu-evolver", {reconnect:true});
       this.socket.on('connect', () => console.log("Connected evolver"));

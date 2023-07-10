@@ -12,18 +12,18 @@ import {FaPlay, FaStop, FaPen, FaChartBar } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import routes from '../../constants/routes.json';
 
-const remote = require('electron').remote;
 const Store = require('electron-store');
+const { remote } = require('electron');
 
-const app = remote.app;
+const { app } = remote;
 const store = new Store();
 
 const styles = {
 };
 
-var fs = require('fs');
-var path = require('path');
-var util = require('util');
+const fs = require('fs');
+const path = require('path');
+const util = require('util');
 
 moment.updateLocale('en', {
     relativeTime : {
@@ -50,25 +50,21 @@ function dirTree(dirname) {
     if (!fs.existsSync(dirname)) {
         fs.mkdirSync(dirname);
     }
-        var folderStats = fs.lstatSync(dirname),
-            info = {
+        const folderStats = fs.lstatSync(dirname);
+        const info = {
                 key: path.basename(dirname),
                 extname: path.extname(dirname)
             };
-        var timestamp = new Date(util.inspect(folderStats.mtime));
+        const timestamp = new Date(util.inspect(folderStats.mtime));
         info.modifiedString = moment(timestamp).fromNow();
         info.modified = moment(timestamp).valueOf();
         info.size = folderStats.size;
 
         if (folderStats.isDirectory()) {
-            info.type = "folder";
-            info.children = fs.readdirSync(dirname).map(function(child) {
-                return dirTree(dirname + '/' + child);
-            });
-        }
-        else {
-
-            info.type = "file";
+          info.type = "folder";
+          info.children = fs.readdirSync(dirname).map(child => dirTree(`${dirname}/${child}`));
+        } else {
+          info.type = "file";
         }
     return info;
 }
@@ -90,10 +86,18 @@ class ScriptFinder extends React.Component {
     };
   }
 
-  componentDidMount(){
-    var filequery = this.loadFileDir(this.state.subFolder, this.state.isScript);
-    var showPagination = (filequery.length > 5);
-    this.setState({fileJSON: filequery, showPagination: showPagination});
+  componentDidMount() {
+    const filequery = this.loadFileDir(this.state.subFolder, this.state.isScript);
+    const showPagination = (filequery.length > 5);
+    this.setState({fileJSON: filequery, showPagination});
+  }
+
+
+  componentWillReceiveProps(props) {
+    const { refind } = this.props;
+    if (props.refind !== refind) {
+      this.handleRefresh(props);
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -104,29 +108,21 @@ class ScriptFinder extends React.Component {
       })
     }
     if (this.props.exptLocation !== prevProps.exptLocation) {
-        this.setState({exptLocation: this.props.exptLocation}, function() {
-            this.handleRefresh(this.props.subFolder);
-        });
+      this.setState({exptLocation: this.props.exptLocation}, () => {
+        this.handleRefresh(this.props.subFolder);
+      });
     }
   }
 
-  componentWillReceiveProps(props) {
-      const {refind} = this.props;
-      if (props.refind !== refind) {
-          this.handleRefresh(props);
-      }
-  }
-
 loadFileDir = (subFolder, isScript) => {
-  if (subFolder == 'undefined'){
-    return []
-  }
-  else{
+  if (subFolder === 'undefined'){
+    return [];
+  } else {
     var dirPath= path.join(this.state.exptLocation, subFolder);
     var resultJSON = {'data': dirTree(dirPath).children};
     if (isScript) {
       for (var i = 0; i < resultJSON['data'].length; i++) {
-        if (resultJSON['data'][i]['type'] == 'folder'){
+        if (resultJSON['data'][i]['type'] === 'folder'){
           var modifiedString;
           var modified;
           var logLocation = path.join(dirPath, resultJSON['data'][i]['key'], 'data', 'evolver.log');
@@ -147,32 +143,31 @@ loadFileDir = (subFolder, isScript) => {
           resultJSON['data'][i]['status'] = this.state.runningExpts.includes(path.join(this.state.exptLocation, 'experiments', resultJSON['data'][i].key)) ? 'Running' : 'Stopped';
           resultJSON['data'][i]['statusDot'] = this.state.runningExpts.includes(path.join(this.state.exptLocation, 'experiments', resultJSON['data'][i].key)) ? <div className="circleGreen"></div> : <div className="circleRed"></div>;
           resultJSON['data'][i]['evolver'] = this.getEvolver(resultJSON['data'][i]['key']);
-
         }
       }
     };
 
-    var searchString = 'data[**]' + '[*type=folder]'
+    var searchString = 'data[**]' + '[*type=folder]';
     var filequery = jsonQuery(searchString, {data: resultJSON}).value;
     return filequery;
   }
 };
 
   handleRefresh = (newProps) => {
-    var filequery = this.loadFileDir(this.state.subFolder, this.state.isScript);
-    var showPagination = (filequery.length > 5)
-    this.setState({fileJSON: filequery, showPagination: showPagination})
+    const filequery = this.loadFileDir(this.state.subFolder, this.state.isScript);
+    const showPagination = (filequery.length > 5)
+    this.setState({fileJSON: filequery, showPagination})
   };
 
   getEvolver = (expt) => {
-    var evolverExptMap = store.get('evolverExptMap', {});
-    var evolver = evolverExptMap[path.join(this.state.exptLocation, this.props.subFolder, expt)] === undefined ? 'Not run yet' : evolverExptMap[path.join(this.state.exptLocation, this.props.subFolder, expt)];
+    const evolverExptMap = store.get('evolverExptMap', {});
+    const evolver = evolverExptMap[path.join(this.state.exptLocation, this.props.subFolder, expt)] === undefined ? 'Not run yet' : evolverExptMap[path.join(this.state.exptLocation, this.props.subFolder, expt)];
     return evolver;
   };
 
   isSelected = rowInfo => {
     if (typeof rowInfo !== 'undefined'){
-      if (rowInfo.index == this.state.selection) {
+      if (rowInfo.index === this.state.selection) {
         this.props.onSelectFolder(rowInfo.original.key);
         return true;
       }
@@ -193,7 +188,7 @@ loadFileDir = (subFolder, isScript) => {
   render() {
     const { classes } = this.props;
     const { fileJSON, dirLength } = this.state;
-    for (var i = 0; i < fileJSON.length; i++) {
+    for (let i = 0; i < fileJSON.length; i++) {
       fileJSON[i].status = this.state.runningExpts.includes(path.join(this.state.exptLocation, this.props.subFolder, fileJSON[i].key)) ? "Running" : "Stopped";
       fileJSON[i].statusDot = fileJSON[i].status === "Running" ? <div className="circleGreen"></div> : <div className="circleRed"></div>;
     }

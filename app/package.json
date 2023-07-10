@@ -1,13 +1,13 @@
 {
-  "name": "eVOLVER",
+  "name": "eVOLVER CNPEM",
   "productName": "eVOLVER",
-  "version": "2.0.0",
+  "version": "0.1.0",
   "description": "Application to run eVOLVER on Desktop",
   "main": "./main.prod.js",
   "author": {
-    "name": "Fynch Biosciences",
-    "email": "brandon@fynchbio.com",
-    "url": "www.fynchbio.com"
+    "name": "CNPEM",
+    "email": "caio.santos@cnpem.br",
+    "url": "www.cnpem.br"
   },
   "scripts": {
     "electron-rebuild": "node -r babel-register ../internals/scripts/ElectronRebuild.js",

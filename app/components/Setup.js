@@ -23,7 +23,7 @@ export default class Setup extends Component<Props> {
             vialData: data,
             tempCalFiles: [],
             odCalFiles: [],
-            pumpCalFile: [],
+            pumpCalFiles: [],
             activeTempCal: 'Retreiving...',
             activeODCal: 'Retreiving...',
             activePumpCal: 'Retreiving...',
@@ -34,14 +34,17 @@ export default class Setup extends Component<Props> {
             showRawOD: false,
             strain: ["FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100", "FL100"]
         };
-      this.control = Array.from(new Array(32).keys()).map(item => Math.pow(2,item));
+      this.control = Array.from(new Array(32).keys()).map(item => item**2);
 
       // Request calibration parameters from server
       this.props.socket.emit('getactivecal', {});
       this.props.socket.emit('getfitnames', {});
 
-      // Receive data of eVOLVER physical changes
-      this.props.socket.on('broadcast', (response) => this.handleRawData(this.handlePiIncoming(response.data), this.state.showRawOD, this.state.showRawTemp));
+      // Receive data from eVOLVER
+      this.props.socket.on('broadcast', (response) => {
+        console.log('Broadcast received');
+        this.handleRawData(this.handleIncoming(response.data), this.state.showRawOD, this.state.showRawTemp);
+      });
 
       // Receive calibration parameters from server
       this.props.socket.on('fitnames', (response) => {
@@ -63,24 +66,29 @@ export default class Setup extends Component<Props> {
       });
 
       this.props.socket.on('activecalibrations', (response) => {
-        let activeODCal;
-        let activeTempCal;
-        let activePumpCal;
-        for (let i = 0; i < response.length; i++) {
-          for (let j = 0; j < response[i].fits.length; j++) {
-            if (response[i].fits[j].active) {
-              if (response[i].calibrationType === 'od') {
-                activeODCal = response[i].fits[j];
-              }
-              else if (response[i].calibrationType === 'temperature') {
-                activeTempCal = response[i].fits[j];
-              }
-              else if (response[i].calibrationType === 'pump') {
-                activePumpCal = response[i].fits[j];
-              }
-            }
-          }
-        }
+        console.log(response[0].fits[0]);
+        console.log(response[1].fits[0]);
+        console.log(response[2].fits[0]);
+        const activePumpCal = response[0].fits[0];
+        const activeTempCal = response[1].fits[0];
+        const activeODCal = response[2].fits[0];
+
+        // Is there the need of sending more than one fit per time?
+        // for (let i = 0; i < response.length; i++) {
+        //   for (let j = 0; j < response[i].fits.length; j++) {
+        //     if (response[i].fits[j].active) {
+        //       if (response[i].calibrationType === 'od') {
+        //         activeODCal = response[i].fits[j];
+        //       }
+        //       else if (response[i].calibrationType === 'temperature') {
+        //         activeTempCal = response[i].fits[j];
+        //       }
+        //       else if (response[i].calibrationType === 'pump') {
+        //         activePumpCal = response[i].fits[j];
+        //       }
+        //     }
+        //   }
+        // }
         this.setState({odCal: activeODCal, tempCal: activeTempCal, activeODCal: activeODCal.name, activeTempCal: activeTempCal.name, activePumpCal: activePumpCal.name});
         store.set('activeODCal', activeODCal.name);
         store.set('activeTempCal', activeTempCal.name);
@@ -113,26 +121,26 @@ export default class Setup extends Component<Props> {
     this.props.socket.removeAllListeners('broadcast');
   }
 
-  handlePiIncoming = (response) => {
+  // Parse the broadcast response from eVOLVER
+  handleIncoming = (response) => {
     const responseData = JSON.parse(JSON.stringify(response));
-    const rawData = Array.apply(null, Array(16)).map(function () {});
+    const rawData = [ ...Array(16) ];
     for(let i = 0; i < this.state.vialData.length; i++) {
       rawData[i] = {};
       rawData[i].vial = this.state.vialData[i].vial;
       rawData[i].selected = this.state.vialData[i].selected;
 
-      if (responseData.od_135)
-      {
-          rawData[i].od_135 = responseData.od_135[i];
+      if (responseData.od_135) {
+        rawData[i].od_135 = responseData.od_135[i];
       }
       if (responseData.od_90) {
-          rawData[i].od_90 = responseData.od_90[i];
+        rawData[i].od_90 = responseData.od_90[i];
       }
       if (responseData.temp) {
-          rawData[i].temp = responseData.temp[i];
+        rawData[i].temp = responseData.temp[i];
       }
     }
-    return rawData
+    return rawData;
   }
 
   handleRawData = (rawData, showRawOD, showRawTemp) => {
@@ -163,48 +171,55 @@ export default class Setup extends Component<Props> {
   handleRawToCal = (response, showRawOD, showRawTemp) => {
     const newVialData = JSON.parse(JSON.stringify(response));
     for(let i = 0; i < newVialData.length; i++) {
-        try {
-          if ((!showRawOD) && (this.state.odCal.length !== 0)) {
-            if (this.state.odCal.type === 'sigmoid') {
-              newVialData[i].od = this.sigmoidRawToCal(parseInt(newVialData[i][this.state.odCal.params[0]]), this.state.odCal.coefficients[i]).toFixed(3);
-            }
-            else if (this.state.odCal.type === '3d') {
-              newVialData[i].od = this.multidimRawToCal(parseInt(newVialData[i][this.state.odCal.params[0]]), parseInt(newVialData[i][this.state.odCal.params[1]]), this.state.odCal.coefficients[i]).toFixed(3);
-            }
-          } else if (this.state.odCal.length === 0) {
-            newVialData[i].od = '--';
-          } else {
-            newVialData[i].od = newVialData[i][this.state.odCal.params[0]];
+      try {
+        if ((!showRawOD) && (this.state.odCal.length !== 0)) {
+          if (this.state.odCal.type === 'sigmoid') {
+            const sigmoidValue = parseInt(newVialData[i][this.state.odCal.params[0]], 10);
+            const sigmoidCal = this.state.odCal.coefficients[i];
+
+            newVialData[i].od = this.sigmoidRawToCal(sigmoidValue, sigmoidCal).toFixed(3);
+          } else if (this.state.odCal.type === '3d') {
+            const multiDimValue1 = parseInt(newVialData[i][this.state.odCal.params[0]], 10);
+            const multiDimValue2 = parseInt(newVialData[i][this.state.odCal.params[1]], 10);
+            const multiDimCal = this.state.odCal.coefficients[i];
+
+            newVialData[i].od = this.multidimRawToCal(multiDimValue1, multiDimValue2, multiDimCal).toFixed(3);
           }
+        } else if (this.state.odCal.length === 0) {
+          newVialData[i].od = '--';
+        } else {
+          newVialData[i].od = newVialData[i][this.state.odCal.params[0]];
         }
-        catch (err) {
-            console.log(err);
+      } catch(err) {
+        console.log(err);
+      }
+      try {
+        if ((!showRawTemp) && (this.state.tempCal.length !== 0)){
+          const linearValue = newVialData[i].temp;
+          const linearCal = this.state.tempCal.coefficients[i];
+
+          newVialData[i].temp = this.linearRawToCal(linearValue, linearCal).toFixed(2);
+        } else if (this.state.tempCal.length === 0) {
+          newVialData[i].temp = '--'
+        } else {
+          newVialData[i].temp = newVialData[i].temp;
         }
-        try {
-          if ((!showRawTemp) && (this.state.tempCal.length !== 0)){
-            newVialData[i].temp = this.linearRawToCal(newVialData[i].temp, this.state.tempCal.coefficients[i]).toFixed(2);
-          } else if (this.state.tempCal.length === 0) {
-            newVialData[i].temp = '--'
-          } else {
-            newVialData[i].temp = newVialData[i].temp;
-          }
-        }
-        catch (err) {
-            console.log(err);
-        }
+      } catch(err) {
+        console.log(err);
+      }
     }
     return newVialData
   };
 
   getBinaryString = vials => {
       let binaryInteger = 0;
-      for (let i = 0; i< vials.length; i++) {
+      for (let i = 0; i < vials.length; i++) {
           binaryInteger += this.control[vials[i]];
       }
       return binaryInteger.toString(2);
   };
 
-  onSelectVials = (selectedVials) =>    {
+  onSelectVials = (selectedVials) => {
     this.setState({selectedItems: selectedVials});
   };
 
@@ -235,7 +250,7 @@ export default class Setup extends Component<Props> {
   onSubmitButton = (evolverComponent, value) => {
     const vials = this.state.selectedItems.map(item => item.props.vial);
     let evolverMessage = {};
-    evolverMessage = Array(16).fill("NaN")
+    evolverMessage = Array(16).fill("NaN");
     if (evolverComponent === "pump") {
       evolverMessage = Array(48).fill("--");
       for (let i = 0; i < 48; i++) {
@@ -252,12 +267,12 @@ export default class Setup extends Component<Props> {
     }
     else {
       for (let i = 0; i < vials.length; i++) {
-          if (evolverComponent === "temp") {
-            evolverMessage[vials[i]] = this.linearCalToRaw(value, this.state.tempCal.coefficients[vials[i]]).toFixed(0);
-          }
-          else {
-            evolverMessage[vials[i]] = value;
-          }
+        if (evolverComponent === "temp") {
+          console.log(this.state.tempCal);
+          evolverMessage[vials[i]] = this.linearCalToRaw(value, this.state.tempCal.coefficients[vials[i]]).toFixed(0);
+        } else {
+          evolverMessage[vials[i]] = value;
+        }
       }
     }
 
@@ -269,7 +284,7 @@ export default class Setup extends Component<Props> {
 
   sigmoidRawToCal = (value, cal) => (cal[2] - ((Math.log10((cal[1] - cal[0]) / (value - cal[0]) - 1)) / cal[3]));
 
-  multidimRawToCal = (value1, value2, cal) => cal[0] + cal[1] * value1 + cal[2] * value2 + cal[3] * value1 * value1 + cal[4] * value1 * value2 + cal[5] * value2 * value2;
+  multidimRawToCal = (value1, value2, cal) => cal[0] + cal[1] * value1 + cal[2] * value2 + cal[3] * value1 * value1 + cal[4] * value1 * value2 + cal[5] * value2 * value2
 
   linearRawToCal = (value, cal) => (value * cal[0]) + cal[1];
 

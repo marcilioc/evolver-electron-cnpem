@@ -18,12 +18,11 @@
   top: 10px;
 }
 
-.calibrationModal{
+.calibrationModal {
   background-color: black;
-  width:900px;
+  width: 900px;
   text-align: center;
 }
 
-.calibrationOverlay{
-
+.calibrationOverlay {
 }

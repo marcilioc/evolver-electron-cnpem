@@ -42,7 +42,7 @@ function setupLogger() {
 }
 
 function isPi() {
-  const pi_module_no = [
+  const piModuleNo = [
     'BCM2708',
     'BCM2709',
     'BCM2710',
@@ -54,7 +54,7 @@ function isPi() {
   try {
     cpuInfo = fs.readFileSync('/proc/cpuinfo', { encoding: 'utf8' });
     console.log(cpuInfo)
-  } catch (e) {
+  } catch (err) {
     return false;
   }
 
@@ -71,7 +71,7 @@ function isPi() {
   }
 
   const number =  model[0][1];
-  return pi_module_no.indexOf(number) > -1;
+  return piModuleNo.indexOf(number) > -1;
 }
 
 function checkExpts() {

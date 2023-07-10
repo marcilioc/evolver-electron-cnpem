@@ -3,37 +3,35 @@ import { withStyles } from '@material-ui/core/styles';
 import AceEditor from 'react-ace';
 import Card from '@material-ui/core/Card';
 import { Link } from 'react-router-dom';
-import routes from '../constants/routes.json';
+import ReactTooltip from 'react-tooltip';
 import moment from 'moment'
 import {FaArrowLeft, FaPlay, FaChartBar, FaStop, FaCopy, FaSave, FaTrashAlt, FaFolderOpen, FaPen} from 'react-icons/fa';
-import TstatEditor from './experiment-configuration/TstatEditor'
 import ReactTable from "react-table";
 import Select from 'react-select';
+import TstatEditor from './experiment-configuration/TstatEditor'
+import routes from '../constants/routes.json';
 import ModalClone from './python-shell/ModalClone';
 import ModalAlert from './ModalAlert';
 import DeleteExptModal from './DeleteExptModal';
 import EvolverSelect from './evolverConfigs/EvolverSelect'
-import ReactTooltip from 'react-tooltip';
-const { ipcRenderer } = require('electron');
-const Store = require('electron-store');
-const md5File = require('md5-file');
-
 import 'brace/mode/python';
 import 'brace/theme/monokai';
 
-var fs = require('fs');
-var path = require('path');
-var util = require('util');
-var rimraf = require('rimraf');
-const remote = require('electron').remote;
-const {shell} = require('electron').remote;
-const app = remote.app;
+const { ipcRenderer } = require('electron');
+const Store = require('electron-store');
+const md5File = require('md5-file');
+const fs = require('fs');
+const path = require('path');
+const util = require('util');
+const rimraf = require('rimraf');
+const { remote } = require('electron');
+const { shell } = require('electron').remote;
+
+const { app } = remote;
 const store = new Store();
-
-var editorComponent;
-var filesToShow = ['eVOLVER.py', 'custom_script.py'];
-
+const filesToShow = ['eVOLVER.py', 'custom_script.py'];
 const filesToCopy = ['custom_script.py', 'eVOLVER.py', 'nbstreamreader.py', 'pump_cal.txt', 'eVOLVER_parameters.json'];
+let editorComponent;
 
 const styles = {
   cardRoot: {
@@ -65,10 +63,10 @@ class ScriptEditor extends React.Component {
 
   constructor(props) {
     super(props);
-    var exptName = path.basename(this.props.exptDir);
+    const exptName = path.basename(this.props.exptDir);
     this.state = {
       exptDir: this.props.exptDir,
-      exptName: exptName,
+      exptName,
       scriptContent: '',
       selection: 'custom_script.py',
       hoveredRow: null,
@@ -100,13 +98,11 @@ class ScriptEditor extends React.Component {
 
     var customScriptMd5 = md5File.sync(path.join(this.state.exptDir, 'custom_script.py'));
     var evolverScriptMd5 = md5File.sync(path.join(this.state.exptDir, 'eVOLVER.py'));
-
     var templateCustomScriptMd5 = md5File.sync(path.join(app.getPath('userData'), 'template', 'custom_script.py'));
     var templateEvolverScriptMd5 = md5File.sync(path.join(app.getPath('userData'), 'template', 'eVOLVER.py'));
-
     var editedExpts = store.get('editedExpts', {});
 
-    if (customScriptMd5 != templateCustomScriptMd5 || evolverScriptMd5 != templateEvolverScriptMd5) {
+    if (customScriptMd5 !== templateCustomScriptMd5 || evolverScriptMd5 !== templateEvolverScriptMd5) {
       if (!editedExpts[this.state.exptName]) {
         editedExpts[this.state.exptName] = 1;
         store.set('editedExpts', editedExpts);
@@ -131,13 +127,13 @@ class ScriptEditor extends React.Component {
 
     ipcRenderer.send('running-expts');
   }
-  
+
   componentDidMount(){
     this.loadTable();
     this.loadSaveParameters();
     this.readfile('custom_script.py');
     ipcRenderer.send('running-expts');
-    var editedExpts = store.get('editedExpts', {});
+    const editedExpts = store.get('editedExpts', {});
     if (editedExpts[this.state.exptName] && !this.state.option) {
       this.setState({option: 1, selectedEditor: exptEditorOptions.find(a => a.value == 'fileEditor')});
     }
@@ -301,10 +297,10 @@ class ScriptEditor extends React.Component {
       var vialConfiguration;
       var vialConfigurationRaw;
       if (fs.existsSync(filename)) {
-          vialConfigurationRaw = fs.readFileSync(filename);          
+          vialConfigurationRaw = fs.readFileSync(filename);
           vialConfiguration = JSON.parse(vialConfigurationRaw)['vial_configuration'];
           vialConfigurationRaw = JSON.parse(vialConfigurationRaw);
-      }      
+      }
       this.setState({vialConfiguration: vialConfiguration});
       if (vialConfigurationRaw) {
         if (vialConfigurationRaw.function == 'turbidostat') {
@@ -366,7 +362,7 @@ class ScriptEditor extends React.Component {
       fs.rename(this.state.exptDir, path.join(path.dirname(this.state.exptDir), response));
     }
   }
-  
+
   mustSaveAlertAnswer = () => {
       this.setState({mustSaveAlertOpen: false})
       console.log("Must save alert closed.");

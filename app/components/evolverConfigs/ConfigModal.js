@@ -23,15 +23,15 @@ class ConfigModal extends React.Component {
       activeEvolver: 'loading...',
       isPi: this.props.isPi
     };
-    this.props.socket.on('broadcastname', function(response) {
+    this.props.socket.on('broadcastname', (response) => {
         if(this.state.isPi){
           store.set('deviceName', response.deviceName)
           this.setState({activeEvolver: response.deviceName}, () => {
             console.log('Updated name to: ',this.state.activeEvolver)})
         } else {
-          //LOOK UP FROM TABLE
+          // LOOK UP FROM TABLE
         }
-      }.bind(this))
+      });
   }
 
   componentDidMount(){

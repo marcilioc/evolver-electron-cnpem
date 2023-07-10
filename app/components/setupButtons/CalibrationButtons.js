@@ -5,8 +5,8 @@ import { Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 import Typography from '@material-ui/core/Typography';
-import styles from './modal-styling.css';
 import Modal from 'react-responsive-modal';
+import styles from './modal-styling.css';
 
 const materialStyles = {
   card: {
@@ -42,6 +42,7 @@ class CalibrationButtons extends React.Component {
       showRawOD: this.props.showRawOD
     };
   }
+
   componentDidUpdate(prevProps) {
     if (this.props.activeTempCal !== prevProps.activeTempCal) {
       this.setState({ activeTempCal: this.props.activeTempCal});
@@ -82,6 +83,7 @@ class CalibrationButtons extends React.Component {
       modalParameter: 'od',
     });
   }
+
   changeActiveTempCal = () => {
     console.log(this.state.tempCalFiles);
     this.setState({
@@ -90,6 +92,7 @@ class CalibrationButtons extends React.Component {
       modalParameter: 'temp'
     });
   }
+
   changeActivePumpCal = () => {
     console.log(this.state.pumpCalFiles);
     this.setState({
@@ -121,9 +124,10 @@ class CalibrationButtons extends React.Component {
   }
 
   render() {
-    const { classes } = this.props;
+    const { classes } = this.props
+    let tempRawBtn;
+    let odRawBtn;
 
-    let tempRawBtn, odRawBtn;
     if (this.state.showRawTemp){
       tempRawBtn = 'rawCalibrationBtnsPushed'
     } else {
@@ -136,29 +140,34 @@ class CalibrationButtons extends React.Component {
       odRawBtn = 'rawCalibrationBtns'
     }
 
-
     return (
       <div>
         <Card className={classes.card}>
           <div className='row centered'>
             <Typography variant="h5" className={classes.labelText}> Temp: </Typography>
-            <button className='calibrationBtns' onClick={this.changeActiveTempCal}>{this.state.activeTempCal}</button>
+            <button className='calibrationBtns' onClick={this.changeActiveTempCal}>
+              {this.state.activeTempCal}
+            </button>
             <button className={tempRawBtn} onClick={this.toggleRawTemp}>RAW</button>
           </div>
           <div className='row centered'>
             <Typography variant="h5" className={classes.labelText}> OD: </Typography>
-            <button className='calibrationBtns' onClick={this.changeActiveODCal}>{this.state.activeODCal}</button>
+            <button className='calibrationBtns' onClick={this.changeActiveODCal}>
+              {this.state.activeODCal}
+            </button>
             <button className={odRawBtn} onClick={this.toggleRawOD}>RAW</button>
           </div>
           <div className='row centered'>
             <Typography variant="h5" className={classes.labelText}> Pump: </Typography>
-            <button className='calibrationBtns' onClick={this.changeActivePumpCal}>{this.state.activePumpCal}</button>
+            <button className='calibrationBtns' onClick={this.changeActivePumpCal}>
+              {this.state.activePumpCal}
+            </button>
           </div>
-          {/*<div className='row centered'>
+          {/* <div className='row centered'>
             <Typography variant="h5" className={classes.labelText}> Pump: </Typography>
             <button className='calibrationBtns'>CAL</button>
             <button className='rawCalibrationBtns'>RAW</button>
-          </div>*/}
+          </div> */}
           <p className='calibrationBtnInstruction'> Change active calibration file or view RAW values.</p>
         </Card>
         <Modal

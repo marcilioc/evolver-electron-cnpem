@@ -31,7 +31,7 @@ class ModalAlert extends React.Component {
   }
 
   onOpenModal = () => {
-    this.setState({ open: true, input:''});
+    this.setState({ open: true, input: '' });
   };
 
   onCloseModal = () => {

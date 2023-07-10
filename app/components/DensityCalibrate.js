@@ -100,6 +100,7 @@ class ODcal extends React.Component {
         this.setState({displayGraphs: true, displayCalibration: true, alertOpen: false, calibration: response});
     }.bind(this));
     this.props.socket.on('broadcast', function(response) {
+        console.log('Broadcast received');
         console.log(this.state.vialData);
         var newVialData = this.state.vialData;
         // if stop was pressed or user still moving vials around, don't want to continue
@@ -163,12 +164,12 @@ class ODcal extends React.Component {
         });
     }.bind(this));
 
-    this.props.socket.on('calibrationrawcallback', function(response) {
+    this.props.socket.on('calibrationrawcallback', (response) => {
       if (response === 'success'){
         store.delete('runningODCal');
         this.props.socket.emit('start-calibration', this.state.experimentName, this.props.socket.io.opts.hostname, 'sigmoid', this.state.experimentName, 'od_90', true);
       }
-    }.bind(this));
+    });
   }
 
   componentDidMount() {
@@ -192,18 +193,18 @@ class ODcal extends React.Component {
 
   startRead = () => {
     this.handleLockBtns();
-    var newVialData = this.state.vialData;
+    const newVialData = this.state.vialData;
 
     // Initialization of data lists
     // First dimension is Vial
     // Second dimension is step number
     // Each step will be a list with 3 technical replicates
     if (newVialData.od135.length === 0) {
-      for (var i = 0; i < 16; i++) {
+      for (let i = 0; i < 16; i++) {
         newVialData.od135.push([]);
         newVialData.od90.push([]);
         newVialData.temp.push([]);
-        for (var j = 0; j < 16; j++) {
+        for (let j = 0; j < 16; j++) {
           // fill these guys with nothing to start just to
           newVialData.od135[i].push([]);
           newVialData.od90[i].push([]);
@@ -213,7 +214,7 @@ class ODcal extends React.Component {
     }
 
     // remove existing data for particular layout
-    for (var i = 0; i < newVialData.od135.length; i++) {
+    for (let i = 0; i < newVialData.od135.length; i++) {
       newVialData.od135[i][this.calculateShift(i)] = [];
       newVialData.od90[i][this.calculateShift(i)] = [];
       newVialData.temp[i][this.calculateShift(i)] = [];
@@ -225,9 +226,9 @@ class ODcal extends React.Component {
     this.props.socket.emit('stopread', {});
     this.handleUnlockBtns()
     // remove existing data for particular layout
-    var newVialData = this.state.vialData;
+    const newVialData = this.state.vialData;
     if (this.vialData) {
-      for (var i = 0; i < this.vialData.od90.length; i++) {
+      for (let i = 0; i < this.vialData.od90.length; i++) {
             if (newVialData.od135) {
               newVialData.od135[i][this.state.currentStep - 1] = [];
             }
@@ -239,15 +240,15 @@ class ODcal extends React.Component {
   }
 
   progress = () => {
-     let readProgress = this.state.readProgress;
-     readProgress = readProgress + (100/(this.state.timesRead + 1));
-     this.setState({readProgress: readProgress});
+     let { readProgress } = this.state;
+     readProgress += (100/(this.state.timesRead + 1));
+     this.setState({ readProgress });
    };
 
   handleBack = () => {
-    var disableForward;
-    var disableBackward;
-    var currentStep = this.state.currentStep - 1;
+    let disableForward;
+    let disableBackward;
+    const currentStep = this.state.currentStep - 1;
 
     if (this.state.currentStep === 16){
       disableForward = false;
@@ -255,18 +256,19 @@ class ODcal extends React.Component {
     if (this.state.currentStep === 2){
       disableBackward = true;
     }
+
     this.child.current.handleBack();
     this.setState({
-      disableForward: disableForward,
-      disableBackward: disableBackward,
-      currentStep: currentStep
-      });
+      disableForward,
+      disableBackward,
+      currentStep
+    });
   };
 
   handleAdvance = () => {
-    var disableForward;
-    var disableBackward;
-    var currentStep = this.state.currentStep + 1;
+    let disableForward;
+    let disableBackward;
+    let currentStep = this.state.currentStep + 1;
 
     // Just in case. Somehow this can go out of it's bounds and cause weirdness
     if (currentStep > 16) {
@@ -285,25 +287,25 @@ class ODcal extends React.Component {
 
     this.child.current.handleAdvance();
     this.setState({
-      disableForward: disableForward,
-      disableBackward: disableBackward,
-      currentStep: currentStep
-      });
+      disableForward,
+      disableBackward,
+      currentStep
+    });
   };
 
   handleLockBtns = () => {
-    var disableForward = true;
-    var disableBackward = true;
+    const disableForward = true;
+    const disableBackward = true;
 
     this.setState({
-      disableForward: disableForward,
-      disableBackward: disableBackward,
-      });
+      disableForward,
+      disableBackward,
+    });
   };
 
   handleUnlockBtns = () => {
-    var disableForward = false;
-    var disableBackward = false;
+    let disableForward = false;
+    let disableBackward = false;
 
     if (this.state.currentStep === 1){
       disableBackward = true;
@@ -313,10 +315,11 @@ class ODcal extends React.Component {
       disableBackward = false;
       disableForward = true;
     }
+
     this.setState({
-      disableForward: disableForward,
-      disableBackward: disableBackward,
-      });
+      disableForward,
+      disableBackward
+    });
   };
 
   handleODChange = (odValues) => {
@@ -324,14 +327,13 @@ class ODcal extends React.Component {
     }
 
   handleStepOne = () => {
-    let floatValues = [];
-    let i;
-    for (i = 0; i < this.state.enteredValues.length; i++) {
+    const floatValues = [];
+    for (let i = 0; i < this.state.enteredValues.length; i++) {
       floatValues[i] = parseFloat(this.state.enteredValues[i]);
     }
 
-    let inputOD = JSON.parse(JSON.stringify(floatValues));
-    let normalizedOD = normalize(inputOD);
+    const inputOD = JSON.parse(JSON.stringify(floatValues));
+    const normalizedOD = normalize(inputOD);
     this.setState({
       enteredValuesFloat: floatValues,
       vialOpacities: normalizedOD,
@@ -343,7 +345,8 @@ class ODcal extends React.Component {
   handleKeyboardInput = (input) => {
     let exptName;
     if (input === ''){
-      exptName = 'ODCal-' + new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
+      const exptDate = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+      exptName = `ODCal-${exptDate}`;
     } else {
       exptName = input
     }
@@ -352,11 +355,16 @@ class ODcal extends React.Component {
 
   handleFinishExpt = () => {
     this.setState({alertOpen: true})
-    var d = new Date();
-    var currentTime = d.getTime();
+    const d = new Date();
+    const currentTime = d.getTime();
+    const rawList = [];
+    const saveData = {
+      name: this.state.experimentName,
+      calibrationType: "od",
+      timeCollected: currentTime,
+      measuredData: Array(16).fill(this.state.enteredValuesFloat), fits:[]
+    };
 
-    var rawList = [];
-    var saveData = {name: this.state.experimentName, calibrationType: "od", timeCollected: currentTime, measuredData: Array(16).fill(this.state.enteredValuesFloat), fits:[]};
     if (this.state.vialData.od90[0][0].length > 0) {
       rawList.push({param: 'od_90', vialData: this.state.vialData.od90});
     }
@@ -389,7 +397,7 @@ class ODcal extends React.Component {
       store.delete('runningODCal');
     }
     if (answer === 'Resume'){
-      var previousState = store.get('runningODCal');
+      const previousState = store.get('runningODCal');
       this.setState(previousState);
     }
     this.setState({resumeOpen:false})
@@ -515,10 +523,10 @@ class ODcal extends React.Component {
     let linearProgress;
     let graphs;
     let calInputs;
-    let odCalTitles = <div></div>;
+    let odCalTitles = <div />;
     let backArrow = <Link className="backHomeBtn" id="experiments" to={{pathname:routes.CALMENU, socket:this.props.socket , logger:this.props.logger}}><FaArrowLeft/></Link>;
     if (this.state.displayGraphs) {
-        linearProgress = <div></div>
+        linearProgress = <div />;
         graphs = <VialArrayGraph
             parameter = {this.state.parameter}
             exptDir = 'na'
@@ -531,7 +539,7 @@ class ODcal extends React.Component {
             displayCalibration = {this.state.displayCalibration}
             dataType = {{type:'calibration', param: 'od90'}}
             passedData = {{vialData: this.state.vialData, enteredValuesFloat: this.state.enteredValuesFloat, calibration: this.state.calibration}}/>;
-        calInputs = <div></div>;
+        calInputs = <div />;
         progressButtons = <div><button className="odViewGraphBtnBack" onClick={this.handleGraph}>BACK</button></div>;
         backArrow = <button className="backHomeBtn" style={{zIndex: '10', position: 'absolute', top: '-2px', left: '-35px'}} id="experiments" onClick={this.handleGraph}><FaArrowLeft/></button>
     }
