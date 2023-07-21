@@ -18,14 +18,17 @@ import VialArrayGraph from './graphing/VialArrayGraph';
 
 const { ipcRenderer } = require('electron');
 const Store = require('electron-store');
-const store = new Store(); //runningODCal
-const remote = require('electron').remote;
-const app = remote.app;
-const http = require('https');
-var path = require('path');
-var fs = require('fs');
 
-const densityButtons = Array.from(Array(16).keys())
+// runningODCal
+const store = new Store();
+const {remote} = require('electron');
+
+const {app} = remote;
+const http = require('https');
+const path = require('path');
+const fs = require('fs');
+
+const densityButtons = Array.from(Array(16).keys());
 
 const cardStyles = theme => ({
   cardODcalGUI: {
@@ -73,7 +76,7 @@ class ODcal extends React.Component {
       readProgress: 0,
       skipFirst: true,
       vialProgress: Array(16).fill(0),
-      vialLabels: ['S0','S1','S2','S3','S4','S5','S6','S7','S8','S9','S10','S11','S12','S13','S14','S15'],
+      vialLabels: ['S1','S2','S3','S4','S5','S6','S7','S8','S9','S10','S11','S12','S13','S14','S15','S16'],
       vialData: {'od135':[],'od90':[],'temp':[]},
       timesRead: 3,
       experimentName:'',
@@ -91,83 +94,84 @@ class ODcal extends React.Component {
       calibration: null
     };
     if (!fs.existsSync(path.join(app.getPath('userData'), 'calibration'))) {
-        fs.mkdirSync(path.join(app.getPath('userData'), 'calibration'));
-        var calibrationsFile = fs.createWriteStream(path.join(app.getPath('userData'), 'calibration', 'calibrate.py'));
-        var calibrationScriptRequest = http.get("https://raw.githubusercontent.com/FYNCH-BIO/dpu/rc/calibration/calibrate.py", function(response) {response.pipe(calibrationsFile)});
+      fs.mkdirSync(path.join(app.getPath('userData'), 'calibration'));
+      const calibrationsFile = fs.createWriteStream(path.join(app.getPath('userData'), 'calibration', 'calibrate.py'));
+      const calibrationScriptRequest = http.get("https://raw.githubusercontent.com/FYNCH-BIO/dpu/rc/calibration/calibrate.py", (response) => {response.pipe(calibrationsFile)});
     }
     ipcRenderer.on('calibration-finished', (calibrationName) => {this.props.socket.emit('getcalibration', {name: calibrationName})});
-    this.props.socket.on('calibration', function(response) {
-        this.setState({displayGraphs: true, displayCalibration: true, alertOpen: false, calibration: response});
-    }.bind(this));
-    this.props.socket.on('broadcast', function(response) {
-        console.log('Broadcast received');
-        console.log(this.state.vialData);
-        var newVialData = this.state.vialData;
-        // if stop was pressed or user still moving vials around, don't want to continue
-        if (this.state.readProgress === 0) {
-            return;
-        }
+    this.props.socket.on('calibration', (response) => {
+      this.setState({displayGraphs: true, displayCalibration: true, alertOpen: false, calibration: response});
+    });
+    this.props.socket.on('broadcast', (response) => {
+      console.log('Broadcast received');
+      console.log(this.state.vialData);
+      const newVialData = this.state.vialData;
+      // if stop was pressed or user still moving vials around, don't want to continue
+      if (this.state.readProgress === 0) {
+          return;
+      }
 
-        // Add the data into the data structures
-        if (!this.state.skipFirst) {
-          if (response.data.od_90 && response.data.temp) {
-            this.progress();
-            /*
-               Note on indexing: Because vials are being shuffled around during a calibration,
-               the data is not collected in order, ie the vial with OD 0 would be the 3rd
-               data point collected for vial 2. To shift them properly,
-               use the formula: (-currentStep -1) + vialIndex. If this is negative,
-               do 15 - <value>.
-            */
-            for (let i = 0; i < response.data.od_90.length; i++) {
-              var shift = this.calculateShift(i);
-              if (response.data.od_135) {
-                newVialData.od135[i][shift].push(parseInt(response.data.od_135[i]));
-              }
-              newVialData.od90[i][shift].push(parseInt(response.data.od_90[i]));
-              newVialData.temp[i][shift].push(parseInt(response.data.temp[i]));
-            }
-          }
-        }
-        else {
+      // Add the data into the data structures
+      if (!this.state.skipFirst) {
+        if (response.data.od_90 && response.data.temp) {
           this.progress();
-        }
-
-        var progressCompleted = (100 * ((this.state.readsFinished) / 16));
-        var readProgress = this.state.readProgress;
-        var readsFinished = 0;
-        var newSkipFirst = false;
-
-        // Check how many reads have been finished by looking through the data structure
-        for (let i = 0; i < 16; i++) {
-          if (newVialData.od90[0][i].length === this.state.timesRead) {
-            readsFinished += 1;
+          /*
+            Note on indexing: Because vials are being shuffled around during a calibration,
+            the data is not collected in order, ie the vial with OD 0 would be the 3rd
+            data point collected for vial 2. To shift them properly,
+            use the formula: (-currentStep -1) + vialIndex. If this is negative,
+            do 15 - <value>.
+          */
+          for (let i = 0; i < response.data.od_90.length; i++) {
+            const shift = this.calculateShift(i);
+            if (response.data.od_135) {
+              newVialData.od135[i][shift].push(parseInt(response.data.od_135[i], 10));
+            }
+            newVialData.od90[i][shift].push(parseInt(response.data.od_90[i], 10));
+            newVialData.temp[i][shift].push(parseInt(response.data.temp[i], 10));
           }
         }
+      } else {
+        this.progress();
+      }
 
-        // This means we've finished - we have all the measurements we need for this step.
-        if (readProgress >= 100) {
-          readProgress = 0;
-          progressCompleted = (100 * ((readsFinished) / 16));
-          this.handleUnlockBtns();
-          newSkipFirst = true;
+      let progressCompleted = (100 * ((this.state.readsFinished) / 16));
+      let {readProgress} = this.state;
+      let readsFinished = 0;
+      let newSkipFirst = false;
+
+      // Check how many reads have been finished by looking through the data structure
+      for (let i = 0; i < 16; i++) {
+        if (newVialData.od90[0][i].length === this.state.timesRead) {
+          readsFinished += 1;
         }
-        this.setState({vialData: newVialData,
-          readProgress: readProgress,
-          progressCompleted: progressCompleted,
-          readsFinished: readsFinished,
+      }
+
+      // This means we've finished - we have all the measurements we need for this step.
+      if (readProgress >= 100) {
+        readProgress = 0;
+        progressCompleted = (100 * ((readsFinished) / 16));
+        this.handleUnlockBtns();
+        newSkipFirst = true;
+      }
+      this.setState({
+          vialData: newVialData,
+          readProgress,
+          progressCompleted,
+          readsFinished,
           skipFirst: newSkipFirst
-        }, function() {
+        },
+        () => {
           if (this.state.progressCompleted === 100) {
             store.set('runningODCal', this.state);
           }
-        });
-    }.bind(this));
+      });
+    });
 
     this.props.socket.on('calibrationrawcallback', (response) => {
       if (response === 'success'){
         store.delete('runningODCal');
-        this.props.socket.emit('start-calibration', this.state.experimentName, this.props.socket.io.opts.hostname, 'sigmoid', this.state.experimentName, 'od_90', true);
+        ipcRenderer.send('start-calibration', this.state.experimentName, this.props.socket.io.opts.hostname, 'sigmoid', this.state.experimentName, 'od_90', true);
       }
     });
   }
@@ -423,24 +427,27 @@ class ODcal extends React.Component {
     if (this.state.readProgress === 0) {
         measureButton =
         <button
+          type="button"
           className="measureBtn"
           onClick = {this.startRead}>
            <FaPlay/>
         </button>;
         try {
-          if (this.state.vialData.od135[0][this.calculateShift(0)].length === this.state.timesRead){
+          if (this.state.vialData.od135[0][this.calculateShift(0)].length === this.state.timesRead) {
               measureButton =
               <button
+                type="button"
                 className="measureBtn"
                 onClick = {this.startRead}>
                  <FaCheck/>
               </button>;
             }
         }
-        catch(err) {}
+        catch(err) { console.log(err) };
     } else {
       measureButton =
       <button
+        type="button"
         className="measureBtn"
         onClick= {this.stopRead}>
         <CircularProgress
@@ -458,9 +465,11 @@ class ODcal extends React.Component {
     }
 
     let btnRight;
-    if  ((this.state.progressCompleted >= 100) && (this.state.currentStep === 16)){
+     if ((true) && (this.state.currentStep === 16)) {
+    // if ((this.state.progressCompleted >= 100) && (this.state.currentStep === 16)) {
       btnRight =
         <button
+          type="button"
           className="odAdvanceBtn"
           onClick={this.handleFinishExpt}>
           <FaPen/>
@@ -468,6 +477,7 @@ class ODcal extends React.Component {
     } else {
       btnRight =
         <button
+          type="button"
           className="odAdvanceBtn"
           disabled={this.state.disableForward}
           onClick={this.handleAdvance}>
@@ -478,101 +488,150 @@ class ODcal extends React.Component {
     let progressButtons;
     if (this.state.inputsEntered) {
         progressButtons = <div>
-        <div className="row" style={{position: 'absolute'}}>
+          <div className="row" style={{position: 'absolute'}}>
+            <button
+              type="button"
+              className="odBackBtn"
+              disabled={this.state.disableBackward}
+              onClick={this.handleBack}>
+              <FaArrowLeft/>
+            </button>
+            {measureButton}
+            {btnRight}
+            </div>
           <button
-            className="odBackBtn"
-            disabled={this.state.disableBackward}
-            onClick={this.handleBack}>
-            <FaArrowLeft/>
+            type="button"
+            className="odViewGraphBtn"
+            onClick={this.handleGraph}>
+              VIEW COLLECTED DATA
           </button>
-          {measureButton}
-          {btnRight}
-          </div>
-        <button className="odViewGraphBtn" onClick={this.handleGraph}>VIEW COLLECTED DATA</button>
         </div>;
     } else {
       progressButtons =
       <div className="row">
         <button
+          type="button"
           className="stepOneBtn"
           onClick={this.handleStepOne}>
           Record Sample Densities <FaPlay size={17}/>
         </button>
       </div>;
-          }
+    }
 
     let calGraphic = null;
     let statusText;
     if (!this.state.inputsEntered) {
-      statusText = <p className="statusText"> Please enter OD calibration Values. </p>
+      statusText = <p className="statusText">
+        Please enter OD calibration Values.
+      </p>
     }
     else if (this.state.readProgress !== 0){
-      statusText = <p className="statusText"> Collecting raw values from eVOLVER... </p>
+      statusText = <p className="statusText">
+        Collecting raw values from eVOLVER...
+      </p>
     }
     else if (this.state.inputsEntered && (this.state.vialData.length !== 0)){
-      statusText = <p className="statusText"> {this.state.readsFinished}/16 Measurements Made </p>
+      statusText = <p className="statusText">
+        {this.state.readsFinished}/16 Measurements Made
+      </p>
     }
     else if (this.state.inputsEntered){
-      statusText = <p className="statusText"> Calibration values locked! Follow sample mapping above. </p>
+      statusText = <p className="statusText">
+        Calibration values locked! Follow sample mapping above.
+      </p>
     }
 
     if (this.state.exiting) {
-      return <Redirect push to={{pathname:routes.CALMENU, socket:this.props.socket, logger:this.props.logger}} />;
+      return <Redirect
+        push to={{pathname:routes.CALMENU, socket:this.props.socket, logger:this.props.logger}}
+      />;
     }
 
     let linearProgress;
     let graphs;
     let calInputs;
     let odCalTitles = <div />;
-    let backArrow = <Link className="backHomeBtn" id="experiments" to={{pathname:routes.CALMENU, socket:this.props.socket , logger:this.props.logger}}><FaArrowLeft/></Link>;
+    let backArrow = <Link
+      className="backHomeBtn"
+      id="experiments"
+      to={{pathname:routes.CALMENU, socket:this.props.socket , logger:this.props.logger}}>
+        <FaArrowLeft/>
+    </Link>;
+
     if (this.state.displayGraphs) {
-        linearProgress = <div />;
-        graphs = <VialArrayGraph
-            parameter = {this.state.parameter}
-            exptDir = 'na'
-            activePlot = 'ALL'
-            ymax = {65000}
-            timePlotted = {this.state.timePlotted}
-            downsample = {this.state.downsample}
-            xaxisName = 'OPTICAL DENSITY'
-            yaxisName = 'ADC VALUE'
-            displayCalibration = {this.state.displayCalibration}
-            dataType = {{type:'calibration', param: 'od90'}}
-            passedData = {{vialData: this.state.vialData, enteredValuesFloat: this.state.enteredValuesFloat, calibration: this.state.calibration}}/>;
-        calInputs = <div />;
-        progressButtons = <div><button className="odViewGraphBtnBack" onClick={this.handleGraph}>BACK</button></div>;
-        backArrow = <button className="backHomeBtn" style={{zIndex: '10', position: 'absolute', top: '-2px', left: '-35px'}} id="experiments" onClick={this.handleGraph}><FaArrowLeft/></button>
+      linearProgress = <div />;
+      graphs = <VialArrayGraph
+        parameter = {this.state.parameter}
+        exptDir = 'na'
+        activePlot = 'ALL'
+        ymax = {65000}
+        timePlotted = {this.state.timePlotted}
+        downsample = {this.state.downsample}
+        xaxisName = 'OPTICAL DENSITY'
+        yaxisName = 'ADC VALUE'
+        displayCalibration = {this.state.displayCalibration}
+        dataType = {{type:'calibration', param: 'od90'}}
+        passedData = {{
+          vialData: this.state.vialData,
+          enteredValuesFloat: this.state.enteredValuesFloat,
+          calibration: this.state.calibration
+        }}
+      />;
+      calInputs = <div />;
+      progressButtons = <div>
+        <button
+          type="button"
+          className="odViewGraphBtnBack"
+          onClick={this.handleGraph}>
+            BACK
+        </button>
+      </div>;
+      backArrow = <button
+        type="button"
+        className="backHomeBtn"
+        style={{zIndex: '10', position: 'absolute', top: '-2px', left: '-35px'}}
+        id="experiments"
+        onClick={this.handleGraph}>
+          <FaArrowLeft/>
+      </button>
+    } else {
+      linearProgress = <div>
+        <LinearProgress
+          classes= {{
+            root: classes.progressBar,
+            colorPrimary: classes.colorPrimary,
+            bar: classes.bar
+          }}
+          variant="determinate"
+          value={this.state.progressCompleted}
+        />
+        {statusText}
+      </div>;
+      graphs = <div />;
+      calInputs = <ODcalInput
+        onChangeValue={this.handleODChange}
+        enteredValues={this.state.enteredValues}
+      />
+      odCalTitles = <button
+        type="button"
+        className="odCalTitles"
+        onClick={this.handleKeyboardModal}>
+          <h4 style={{fontWeight: 'bold', fontStyle: 'italic'}}> {this.state.experimentName} </h4>
+      </button>
     }
-    else {
-        linearProgress = <div><LinearProgress
-              classes= {{
-                root: classes.progressBar,
-                colorPrimary: classes.colorPrimary,
-                bar: classes.bar
-              }}
-              variant="determinate"
-              value={this.state.progressCompleted} />
-            {statusText}</div>;
-        graphs = <div></div>;
-        calInputs = <ODcalInput
-          onChangeValue={this.handleODChange}
-          enteredValues = {this.state.enteredValues}/>
-        odCalTitles = <button
-          className="odCalTitles"
-          onClick={this.handleKeyboardModal}><h4 style={{fontWeight: 'bold', fontStyle: 'italic'}}> {this.state.experimentName} </h4></button>
-    }
-    calGraphic = <div><Card className={classes.cardODcalGUI}>
-            <ODcalGUI
-              ref={this.child}
-              displayGraphs = {this.state.displayGraphs}
-              vialOpacities = {this.state.vialOpacities}
-              generalOpacity = {this.state.generalOpacity}
-              valueInputs = {this.state.enteredValuesFloat}
-              readProgress = {this.state.vialProgress}
-              vialLabels = {this.state.vialLabels}/>
-              {linearProgress}
-          </Card>
-        </div>
+    calGraphic = <div>
+      <Card className={classes.cardODcalGUI}>
+        <ODcalGUI
+          ref={this.child}
+          displayGraphs = {this.state.displayGraphs}
+          vialOpacities = {this.state.vialOpacities}
+          generalOpacity = {this.state.generalOpacity}
+          valueInputs = {this.state.enteredValuesFloat}
+          readProgress = {this.state.vialProgress}
+          vialLabels = {this.state.vialLabels}/>
+          {linearProgress}
+      </Card>
+    </div>
 
     return (
       <div>
@@ -582,7 +641,10 @@ class ODcal extends React.Component {
         {progressButtons}
         {calInputs}
         {odCalTitles}
-        <TextKeyboard ref={this.keyboard} onKeyboardInput={this.handleKeyboardInput} keyboardPrompt={this.state.keyboardPrompt}/>
+        <TextKeyboard
+          ref={this.keyboard}
+          onKeyboardInput={this.handleKeyboardInput}
+          keyboardPrompt={this.state.keyboardPrompt}/>
         <ModalAlert
           alertOpen= {this.state.alertOpen}
           alertQuestion = {this.state.alertQuestion}

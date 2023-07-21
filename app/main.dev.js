@@ -10,56 +10,28 @@
  *
  * @flow
  */
-import { ipcMain, app, BrowserWindow, Menu  } from 'electron';
-import { version } from 'prettier';
-import MenuBuilder from './menu';
+
+// IPC communication so background windows can talk to the renderer
+import { ipcMain, app, BrowserWindow } from 'electron';
 
 let mainWindow = null;
-
-/*
- * Ipc communication so background windows can talk to the renderer.
- *
- */
-
-/* Constants for indexing commands for ps.lookup */
-const ZERO = 3;
-const OVERWRITE = 5;
-const CONTINUE = 7;
-const PARAMETERS = 9;
-const EVOLVERIP = 11;
-const EVOLVERPORT = 13;
-const NAME = 15;
-const BLANK = 17;
-
 const path = require('path');
 const ps = require('ps-node');
-const fs = require('fs');
-const http = require('https');
 const Store = require('electron-store');
-const { exec } = require("child_process");
-const { dialog } = require('electron')
+const { dialog } = require('electron');
 const { PythonShell } = require('python-shell');
 
-const { fork } = require('child_process')
-
 const store = new Store({
-  defaults:{
+  defaults: {
     running_expts: [],
     first_visit: null
   }
 });
 
-const backgroundShells = [];
-const tasks = [];
-const available = [];
-const maxShells = 5;
-
 const exptMap = {};
-const activeIp = '';
-
 const isWin = process.platform === "win32";
 
-/* Get array of running experiments from exptMap. Store path and pid information only. */
+// Get array of running experiments from exptMap. Store path and pid information only
 function storeRunningExpts() {
   const runningExpts = Object.keys(exptMap).reduce((obj, x) => {
     const data = {
@@ -74,82 +46,75 @@ function storeRunningExpts() {
   console.log(store.get('running_expts'));
 };
 
-/* Handle startup of a python shell instance to run the DPU */
+// Handle startup of a python shell instance to run the DPU
 function startPythonExpt(exptDir, flag) {
   const scriptName = path.join(exptDir, 'eVOLVER.py');
   let pythonPath = path.join(store.get('dpu-env'), 'bin', 'python3');
-  if (isWin) {
-    pythonPath = path.join(store.get('dpu-env'), 'Scripts', 'python');
-  }
+  if (isWin) pythonPath = path.join(store.get('dpu-env'), 'Scripts', 'python');
   const options = {
-      mode: 'text',
-      pythonPath,
-      args: flag
-    };
+    mode: 'text',
+    pythonPath,
+    args: flag
+  };
   const pyShell = new PythonShell(scriptName, options);
-  pyShell.on('message', (message) => {
-    console.log(message);
-  });
+  pyShell.on('message', (message) => console.log(message));
   exptMap[exptDir] = pyShell;
-  const {pid} = pyShell.childProcess;
+  const { pid } = pyShell.childProcess;
   pyShell.on('close', () => {
     console.log(`eVOLVER script with PID ${pid} closed.`);
-     delete exptMap[exptDir];
-     storeRunningExpts();
-     mainWindow.webContents.send('running-expts',Object.keys(exptMap));
+    delete exptMap[exptDir];
+    storeRunningExpts();
+    mainWindow.webContents.send('running-expts',Object.keys(exptMap));
   });
   storeRunningExpts();
   mainWindow.webContents.send('running-expts',Object.keys(exptMap));
 }
 
 function startPythonCalibration(calibrationName, ip, fitType, fitName, params) {
-    const scriptName = path.join(app.getPath('userData'), 'calibration', 'calibrate.py');
-    let pythonPath = path.join(store.get('dpu-env'), 'bin', 'python3');
-    if (isWin) {
-        pythonPath = path.join(store.get('dpu-env'), 'Scripts', 'python');
-    }
-    const options = {
-        mode: 'text',
-        pythonPath,
-        args: ['--always-yes',
-                '--no-graph',
-                '-a', ip,
-                '-n', calibrationName,
-                '-f', fitName,
-                '-t', fitType,
-                '-p', params]
-    }
-    const pyShell = new PythonShell(scriptName, options);
-    pyShell.on('close', () => {
-        console.log(`Calibration finished for ${calibrationName}`);
-        mainWindow.webContents.send('calibration-finished', calibrationName);
-    })
+  const scriptName = 'D:\\Git\\evolver-electron-cnpem\\calibration\\calibrate.py';
+  console.log(scriptName);
+  let pythonPath = '/usr/bin/python3';
+  if (isWin) pythonPath = path.resolve('C:\\Users\\caio.santos\\AppData\\Local\\Programs\\Python\\Python311\\python.exe');
+  const options = {
+    mode: 'text',
+    pythonPath,
+    args: ['--always-yes',
+            '--no-graph',
+            '-a', ip,
+            '-n', calibrationName,
+            '-f', fitName,
+            '-t', fitType,
+            '-p', params]
+  };
+  const pyShell = new PythonShell(scriptName, options)
+
+  pyShell.on('close', () => {
+    console.log(`Calibration finished for ${calibrationName}`);
+    mainWindow.webContents.send('calibration-finished', calibrationName);
+  });
 }
 
-/* Handle killing and relaunching experiments not connected to application. */
+// Handle killing and relaunching experiments not connected to application
 function killExpts(relaunch) {
-  const running_expts_copy = []
+  const runningExptsCopy = []
   for (let i = 0; i < store.get('running_expts').length; i++) {
-    running_expts_copy.push(store.get('running_expts')[i]);
+    runningExptsCopy.push(store.get('running_expts')[i]);
   }
   store.set('running_expts', []);
-  for (let i = 0; i < running_expts_copy.length; i++) {
-    ps.lookup({pid: running_expts_copy[i].pid}, (err, resultList) => {
-      if (err) {
-        throw new Error(err);
-      }
-      if (resultList.length === 0) {
-        return;
-      }
-      const expt_process = resultList[0];
-      for (let i = 0; i < expt_process.arguments.length; i++) {
-        if (expt_process.arguments[i].includes('eVOLVER.py')) {
-          ps.kill(expt_process.pid, (err) => {
-            if (err) {
-              throw new Error(err);
-            }
-            else {
-              console.log('Process %s has been killed!', expt_process.pid);
+
+  for (let i = 0; i < runningExptsCopy.length; i++) {
+    ps.lookup({pid: runningExptsCopy[i].pid}, (err, resultList) => {
+      if (err) throw new Error(err);
+      if (resultList.length === 0) return;
+      const exptProcess = resultList[0];
+
+      for (let j = 0; j < exptProcess.arguments.length; j++) {
+        if (exptProcess.arguments[j].includes('eVOLVER.py')) {
+          ps.kill(exptProcess.pid, (er) => {
+            if (er) {
+              throw new Error(er);
+            } else {
+              console.log('Process %s has been killed!', exptProcess.pid);
             }
           });
           break;
@@ -158,7 +123,7 @@ function killExpts(relaunch) {
     });
     if (relaunch) {
       console.log("Relaunching")
-      startPythonExpt(running_expts_copy[i].path, '--always-yes');
+      startPythonExpt(runningExptsCopy[i].path, '--always-yes');
     }
   }
 }
@@ -180,20 +145,21 @@ ipcMain.on('stop-script', (arg) => {
 });
 
 ipcMain.on('start-calibration', (experimentName, ip, fitType, fitName, params) => {
-    startPythonCalibration(experimentName, ip, fitType, fitName, params);
+  console.log('Sent calibration request');
+  startPythonCalibration(experimentName, ip, fitType, fitName, params);
 });
 
 ipcMain.on('running-expts', () => {
-   mainWindow.webContents.send('running-expts',Object.keys(exptMap));
+  mainWindow.webContents.send('running-expts',Object.keys(exptMap));
 });
 
 ipcMain.on('active-ip', (arg) => {
   mainWindow.webContents.send('get-ip', arg);
-  });
+});
 
 ipcMain.on('kill-expts', (arg) => {
   killExpts(arg.relaunch);
-  });
+});
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -223,8 +189,7 @@ function createWindow () {
   let position = [];
   if (mainWindow) {
     position = mainWindow.getPosition();
-  }
-  else {
+  } else {
     position = [0,0];
   }
 
@@ -243,9 +208,7 @@ function createWindow () {
     }
   });
 
-  if (process.env.START_FULLSCREEN) {
-    mainWindow.setFullScreen(true);
-  }
+  if (process.env.START_FULLSCREEN) mainWindow.setFullScreen(true);
   mainWindow.setMenu(null);
   mainWindow.loadFile(`${__dirname}/app.html`);
 
@@ -267,6 +230,7 @@ function createWindow () {
   });
 
   mainWindow.on('close', (e) => {
+    let choice;
     if (store.get('running_expts').length > 0) {
       const runningExpts = [];
       let message = '';
@@ -275,30 +239,24 @@ function createWindow () {
       for (let i = 0; i < store.get('running_expts').length; i++) {
         const temp = store.get('running_expts')[i].path;
         runningExpts.push(temp.split('/').pop())
-      };
+      }
       message = 'The following running experiments have been detected and will persist if the application is closed. Would you still like to close the application?';
       detail = runningExpts.join('\n');
 
-      var choice = dialog.showMessageBox(this,
+      choice = dialog.showMessageBox(this,
         {
           type: 'question',
           buttons: ['Yes', 'No'],
           title: 'Confirm',
           message,
           detail
-          });
+      });
     };
-       if(choice === 1){
-         e.preventDefault();
-       }
-    });
- };
+    if(choice === 1) e.preventDefault();
+  });
+}
 
-
-/**
- * Add event listeners...
- */
-
+// Add event listeners
 app.on('window-all-closed', () => {
   app.quit();
 });
@@ -318,7 +276,8 @@ app.on('activate', () => {
 });
 
 /*
-setAboutPanelOptions() only available for macOS
-app.setAboutPanelOptions({
-  copyright: "Copyright © 2019 Fynch Biosciences Inc."
-}); */
+ * setAboutPanelOptions() only available for macOS
+ * app.setAboutPanelOptions({
+ *   copyright: "Copyright © 2019 Fynch Biosciences Inc."
+ * });
+ */

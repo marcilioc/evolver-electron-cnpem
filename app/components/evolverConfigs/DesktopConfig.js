@@ -99,19 +99,18 @@ class DesktopConfig extends React.Component {
           console.log("Connected registration socket")
           this.state.registerSocket.emit('getdevicename', {})});
         this.state.registerSocket.on('broadcastname', (response) => {
-            console.log(response)
-
+            console.log(response);
             const evolverDevice = this.state.newEvolver;
             evolverDevice.name = response.deviceName;
             evolverDevice.label = `${response.deviceName} (${newEvolver.value})`;
             evolverDevice.mac = response.mac;
             evolverDevice.statusColor = '#DC143C';
-            console.log(evolverDevice)
-            // Sets the newEvolver initial state
-            this.setState({newEvolver})
-          })
-      })
+            console.log(evolverDevice);
 
+            // Sets the newEvolver initial state
+            this.setState({newEvolver});
+        });
+      });
   }
 
   enterPressed(event) {
@@ -173,11 +172,11 @@ class DesktopConfig extends React.Component {
     let registrationText;
 
     if (registeredIndex === undefined){
-      registrationButton = <button className='logEvolverRegistration' onClick={this.handleLogEvolver}>Register!</button>
+      registrationButton = <button type='button' className='logEvolverRegistration' onClick={this.handleLogEvolver}>Register!</button>
       registrationText = <Typography className={classes.registrationStatus}> eVOLVER Found! Please register to use with this app. </Typography>
 
     } else {
-      registrationButton = <button className='logEvolverRegistration' onClick={() => this.handleUnregister(registeredIndex)}>Unregister</button>
+      registrationButton = <button type='button' className='logEvolverRegistration' onClick={() => this.handleUnregister(registeredIndex)}>Unregister</button>
       registrationText = <Typography className={classes.registrationStatus}> Already registered! Please proceed to unregister eVOLVER. </Typography>
     }
 
@@ -232,7 +231,7 @@ class DesktopConfig extends React.Component {
               <input className='registerEvolverInput' type="text" value={this.state.value} onChange={this.handleChange} onKeyPress={this.enterPressed.bind(this)}/>
           </div>
           <div className='registerEvolverContainer' style={{margin: '98px 0px 0px 645px'}}>
-            <button className='registerEvolverSubmit' onClick={this.handleSubmit}>Find</button>
+            <button type='button' className='registerEvolverSubmit' onClick={this.handleSubmit}>Find</button>
           </div>
           <Typography className={classes.title}> CONNECT APP TO EVOLVER </Typography>
           <Card className= {classes.foundEvolverCard}>

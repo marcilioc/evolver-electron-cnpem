@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom'; 
+import ReactDOM from 'react-dom';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -27,7 +27,7 @@ class VialOutline extends React.Component {
     super(props);
     this.state = {
       readProgress: this.props.readProgress,
-      items: [12,13,14,15,8,9,10,11,4,5,6,7,0,1,2,3]
+      items: [13,14,15,16,9,10,11,12,5,6,7,8,1,2,3,4]
     };
   }
 
@@ -47,7 +47,7 @@ class VialOutline extends React.Component {
 
     return(
       <ul className="outlineWrapper">
-        {this.state.items.map((items,index) => (
+        {this.state.items.map((items, index) => (
           <div>
             <button
               className="vialOutline"

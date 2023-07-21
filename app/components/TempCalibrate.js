@@ -8,6 +8,7 @@ import Card from '@material-ui/core/Card';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import {FaPlay, FaArrowLeft, FaArrowRight, FaStop, FaCheck, FaPen } from 'react-icons/fa';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import { ipcRenderer } from 'electron';
 import TempCalGUI from './calibrationInputs/CalGUI';
 import TempcalInput from './calibrationInputs/CalInputs';
 import routes from '../constants/routes.json';
@@ -97,7 +98,7 @@ class TempCal extends React.Component {
       vialProgress: Array(16).fill(0),
       initialZipped: [],
       inputsEntered: true,
-      vialLabels: ['S0','S1','S2','S3','S4','S5','S6','S7','S8','S9','S10','S11','S12','S13','S14','S15'],
+      vialLabels: ['S1','S2','S3','S4','S5','S6','S7','S8','S9','S10','S11','S12','S13','S14','S15','S16'],
       vialData: [],
       currentPowerLevel: [4095,4095,4095,4095,4095,4095,4095,4095,4095,4095,4095,4095,4095,4095,4095,4095],
       tempRawDelta: 500,
@@ -134,12 +135,12 @@ class TempCal extends React.Component {
     //     const calibrationScriptRequest = http.get("https://raw.githubusercontent.com/FYNCH-BIO/dpu/rc/calibration/calibrate.py", (response) => {response.pipe(calibrationsFile)});
     // }
 
-    // ipcRenderer.on('calibration-finished', (event, calibrationName) => {this.props.socket.emit('getcalibration', {name: calibrationName})});
-    this.props.socket.on('calibrationfinished', (e, calibrationName) => {
-      console.log('Calibration finished');
-      this.props.socket.emit('getcalibration', { name: calibrationName });
-      console.log('Calibration configs received');
-    });
+    ipcRenderer.on('calibration-finished', (event, calibrationName) => {this.props.socket.emit('getcalibration', {name: calibrationName})});
+    // this.props.socket.on('calibrationfinished', (e, calibrationName) => {
+    //   console.log('Calibration finished');
+    //   this.props.socket.emit('getcalibration', { name: calibrationName });
+    //   console.log('Calibration configs received');
+    // });
 
     this.props.socket.on('calibration', (response) => {
       this.setState({
@@ -169,23 +170,22 @@ class TempCal extends React.Component {
       });
 
       // If stop was pressed or user still moving vials around, don't want to continue
-      if (this.state.readProgress === 0) {
-          return;
-      }
+      if (this.state.readProgress === 0) return;
       this.progress();
 
       for (let i = 0; i < response.data.temp.length; i++) {
-          if (newVialData[newVialData.length - 1].temp.length <= i) {
-              newVialData[newVialData.length - 1].temp.push([]);
-          }
-          newVialData[newVialData.length - 1].temp[i].push(parseInt(response.data.temp[i], 10));
+        if (newVialData[newVialData.length - 1].temp.length <= i) {
+          newVialData[newVialData.length - 1].temp.push([]);
+        }
+        newVialData[newVialData.length - 1].temp[i].push(parseInt(response.data.temp[i], 10));
       }
-      this.setState({
-        tempStream,
-        valueInputs,
-        vialData: newVialData,
-        equilibrateState: true},
-
+      this.setState(
+        {
+          tempStream,
+          valueInputs,
+          vialData: newVialData,
+          equilibrateState: true
+        },
         // Runs when collected enough measurements
         () => {
           const tempArray = this.state.vialData[newVialData.length - 1].temp;
@@ -211,30 +211,31 @@ class TempCal extends React.Component {
               () => store.set('runningTempCal', this.state)
             );
           }
-	    });
+	      }
+      );
     });
 
     this.props.socket.on('calibrationrawcallback', (response) => {
       if (response === 'success'){
         store.delete('runningTempCal');
-        const calibrationData = {
-          experimentName: this.state.experimentName,
-          hostname: this.props.io.opts.hostname,
-          fit: 'linear',
-          fitName: this.state.experimentName,
-          params: 'temp'
-        };
-        // ipcRenderer.send('start-calibration', this.state.experimentName, this.props.socket.io.opts.hostname, 'linear', this.state.experimentName, 'temp', true);
-        this.props.socket.emit('startcalibration', calibrationData);
-        console.log('Started DPU calibration');
+        // const calibrationData = {
+        //   experimentName: this.state.experimentName,
+        //   hostname: this.props.io.opts.hostname,
+        //   fit: 'linear',
+        //   fitName: this.state.experimentName,
+        //   params: 'temp'
+        // };
+        console.log('Started calibration');
+        ipcRenderer.send('start-calibration', this.state.experimentName, '127.0.0.1', 'linear', this.state.experimentName, 'temp');
+        // this.props.socket.emit('startcalibration', calibrationData);
       }
     });
   }
 
   componentDidMount() {
-    this.props.logger.info('Routed to Temperature Calibration Page.')
+    this.props.logger.info('Routed to Temperature Calibration Page.');
     if (store.has('runningTempCal')){
-      this.setState({resumeOpen:true})
+      this.setState({ resumeOpen: true });
     } else {
       this.keyboard.current.onOpenModal();
     }
@@ -248,7 +249,7 @@ class TempCal extends React.Component {
       valueInputs: Array(16).fill('...'),
       buttonAdvanceText,
       buttonBackText,
-      })
+    });
   };
 
   componentWillUnmount() {
@@ -265,15 +266,13 @@ class TempCal extends React.Component {
     }
 
     this.props.socket.emit("command", {param: "temp", value: evolverValue, immediate: true});
-
-    if (this.state.equilibrateState){
+    if (this.state.equilibrateState) {
       this.handleLockBtns();
 
       let percentVialProgress = [];
       if (this.state.currentStep > 1) {
         percentVialProgress = calculateVialProgress(this.state.tempStream, this.state.tempStream, this.state.currentPowerLevel);
       }
-
       this.setState({
         equilibrateState: false,
         inputsEntered: false,
@@ -421,78 +420,78 @@ class TempCal extends React.Component {
 
   handleTempInput = (tempValues) => {
     this.setState({enteredValues: tempValues});
-    }
+  }
 
-   handleKeyboardInput = (input) => {
-     let exptName;
-     if (input === ''){
+  handleKeyboardInput = (input) => {
+    let exptName;
+    if (input === ''){
       const exptDate = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
       exptName = `Temp-${exptDate}`;
-     } else {
-      exptName = input
-     }
-     this.setState({experimentName: exptName});
-   }
+    } else {
+      exptName = input;
+    }
+    this.setState({experimentName: exptName});
+  }
 
-   handleFinishExpt = () => {
-      this.setState({alertOpen: true})
-      const d = new Date();
-      const currentTime = d.getTime();
-      const enteredValuesStructured = [];
-      const vialDataStructured = [];
+  handleFinishExpt = () => {
+    this.setState({alertOpen: true})
+    const d = new Date();
+    const currentTime = d.getTime();
+    const enteredValuesStructured = [];
+    const vialDataStructured = [];
 
-      // TODO: Change data structure so that we don't have to do this transformation. Would require other code restructure
-      // Data should be saved vial -> step -> data format, not step -> vial -> data as it is here.
-      for(let i = 0; i < this.state.vialData.length; i++) {
-        for(let j = 0; j < this.state.vialData[i].enteredValues.length; j++) {
-          if(!enteredValuesStructured[j]) {
-            enteredValuesStructured.push([]);
-            vialDataStructured.push(new Array(3).fill([]));
-          }
-          enteredValuesStructured[j].push(parseFloat(this.state.vialData[i].enteredValues[j]));
-          vialDataStructured[j][i] = this.state.vialData[i].temp[j];
+    // TODO: Change data structure so that we don't have to do this transformation. Would require other code restructure
+    // Data should be saved vial -> step -> data format, not step -> vial -> data as it is here.
+    for(let i = 0; i < this.state.vialData.length; i++) {
+      for(let j = 0; j < this.state.vialData[i].enteredValues.length; j++) {
+        if(!enteredValuesStructured[j]) {
+          enteredValuesStructured.push([]);
+          vialDataStructured.push(new Array(3).fill([]));
         }
+        enteredValuesStructured[j].push(parseFloat(this.state.vialData[i].enteredValues[j]));
+        vialDataStructured[j][i] = this.state.vialData[i].temp[j];
       }
-      const saveData = {
-        name: this.state.experimentName,
-        calibrationType: "temperature",
-        timeCollected: currentTime,
-        measuredData: enteredValuesStructured,
-        fits: [], raw: [{param: 'temp', vialData: vialDataStructured}]
-      }
-      this.props.socket.emit('setrawcalibration', saveData);
-      console.log('raw sent');
-   }
+    }
+    const saveData = {
+      name: this.state.experimentName,
+      calibrationType: "temperature",
+      timeCollected: currentTime,
+      measuredData: enteredValuesStructured,
+      fits: [], raw: [{param: 'temp', vialData: vialDataStructured}]
+    }
+    this.props.socket.emit('setrawcalibration', saveData);
+    console.log('raw sent');
+  }
 
-   handleKeyboardModal = () => {
-     this.keyboard.current.onOpenModal();
-   }
+  handleKeyboardModal = () => {
+    this.keyboard.current.onOpenModal();
+  }
 
-   onAlertAnswer = (answer) => {
-     if (answer === 'Retry'){
-       this.handleFinishExpt();
-     }
-     if (answer === 'Exit'){
-       store.delete('runningTempCal');
-       this.setState({exiting: true});
-     }
-   }
+  onAlertAnswer = (answer) => {
+    if (answer === 'Retry'){
+      this.handleFinishExpt();
+    }
+    if (answer === 'Exit'){
+      store.delete('runningTempCal');
+      this.setState({exiting: true});
+    }
+  }
 
-   onResumeAnswer = (answer) => {
-     if (answer === 'New'){
-       this.keyboard.current.onOpenModal();
-       store.delete('runningTempCal');
-     }
-     if (answer === 'Resume'){
-       const previousState = store.get('runningTempCal');
-       this.setState(previousState);
-     }
-     this.setState({resumeOpen:false})
-   }
+  onResumeAnswer = (answer) => {
+    if (answer === 'New'){
+      this.keyboard.current.onOpenModal();
+      store.delete('runningTempCal');
+    }
+    if (answer === 'Resume'){
+      const previousState = store.get('runningTempCal');
+      this.setState(previousState);
+    }
+    this.setState({resumeOpen:false})
+  }
 
-   handleGraph = () => {
-       this.setState({displayGraphs: !this.state.displayGraphs});
-   }
+  handleGraph = () => {
+    this.setState({displayGraphs: !this.state.displayGraphs});
+  }
 
   render() {
     const { classes, theme } = this.props;
@@ -502,44 +501,52 @@ class TempCal extends React.Component {
     let statusText;
 
     if ((this.state.vialData.length === 0) && (this.state.equilibrateState)) {
-      statusText = <p className="statusText">Load vessels w/ 15 mL of room temp water. </p>
+      statusText = <p className="statusText">
+        Load vessels w/ 15 mL of room temp water.
+      </p>
     }
     else if ((this.state.vialData.length === 0) && (!this.state.equilibrateState)) {
-      statusText = <p className="statusText"> Heaters turned off. Let equilibrate, then enter values. </p>
+      statusText = <p className="statusText">
+        Heaters turned off. Let equilibrate, then enter values.
+      </p>
     }
     else if ((this.state.vialData.length !== 0) && (this.state.equilibrateState)) {
-      statusText = <p className="statusText"> {this.state.readsFinished}/{this.state.deltaTempSteps} Measurements Made </p>
+      statusText = <p className="statusText">
+        {this.state.readsFinished}/{this.state.deltaTempSteps} Measurements Made
+      </p>
     }
     else if ((this.state.vialData.length !== 0) && (!this.state.equilibrateState)) {
-      statusText = <p className="statusText"> Temperature set! Let equilibrate, then enter values. </p>
+      statusText = <p className="statusText">
+        Temperature set! Let equilibrate, then enter values.
+      </p>
     }
 
-
-
     if (this.state.readProgress === 0) {
-        measureButton =
-        <button
-          className="tempMeasureBtn"
-          onClick = {this.startRead}>
-          {this.state.buttonMeasureText} <FaPlay size={13}/>
-        </button>;
+      measureButton =
+      <button
+        type="button"
+        className="tempMeasureBtn"
+        onClick = {this.startRead}>
+        {this.state.buttonMeasureText} <FaPlay size={13}/>
+      </button>;
       for (let i = 0; i < this.state.vialData.length; i++) {
         if ((this.state.currentStep === this.state.vialData[i].step) && (typeof(this.state.vialData[i].temp[0]) !== "undefined")) {
-          if (this.state.vialData[i].temp[0].length === this.state.timesRead){
-
-              measureButton =
-              <button
-                className="tempMeasureBtn"
-                onClick = {this.startRead}>
-                 {this.state.buttonMeasureText} <FaCheck size={13}/>
-              </button>;
-              break;
-            }
+          if (this.state.vialData[i].temp[0].length === this.state.timesRead) {
+            measureButton =
+            <button
+              type="button"
+              className="tempMeasureBtn"
+              onClick = {this.startRead}>
+                {this.state.buttonMeasureText} <FaCheck size={13}/>
+            </button>;
+            break;
+          }
         }
       }
     } else {
       measureButton =
       <button
+        type="button"
         className="tempMeasureBtn"
         onClick= {this.stopRead}>
         <CircularProgress
@@ -554,52 +561,53 @@ class TempCal extends React.Component {
         />
         <FaStop size={18} className = "readStopBtn"/>
       </button>;
-
       statusText = <p className="statusText">Collecting raw values from eVOLVER...</p>;
     }
 
     let btnRight;
-    if ((this.state.progressCompleted >= 100) && (this.state.currentStep === this.state.deltaTempSteps)){
+    if (true && (this.state.currentStep === this.state.deltaTempSteps)) {
+    // if ((this.state.progressCompleted >= 100) && (this.state.currentStep === this.state.deltaTempSteps)){
       btnRight =
         <button
+          type="button"
           className="tempAdvanceBtn"
           onClick={this.handleFinishExpt}>
-          <FaPen />
+            <FaPen />
         </button>
     } else {
-      btnRight =
-        <button
-          className="tempAdvanceBtn"
-          disabled={this.state.disableForward}
-          onClick={this.handleAdvance}>
-          {this.state.buttonAdvanceText} <FaArrowRight size={13} />
-        </button>
+      btnRight = <button
+        type="button"
+        className="tempAdvanceBtn"
+        disabled={this.state.disableForward}
+        onClick={this.handleAdvance}>
+        {this.state.buttonAdvanceText} <FaArrowRight size={13} />
+      </button>
     }
-
 
     let progressButtons;
     if ((this.state.vialData.length === 0) && (this.state.equilibrateState)) {
-      progressButtons =
-      <div className="row">
+      progressButtons = <div className="row">
         <button
+          type="button"
           className="stepOneBtn"
           onClick={this.startRead}>
-          Start Temperature Calibration <FaPlay size={17} />
+            Start Temperature Calibration <FaPlay size={17} />
         </button>
       </div>;
     } else {
-        progressButtons = <div>
-      <div className="row" style={{position: 'absolute'}}>
-        <button
-          className="tempBackBtn"
-          disabled={this.state.disableBackward}
-          onClick={this.handleBack}>
-          {this.state.buttonBackText} <FaArrowLeft size={13} />
-        </button>
-        {measureButton}
-        {btnRight}
-      </div>
-      <button className="odViewGraphBtn" onClick={this.handleGraph}>VIEW COLLECTED DATA</button>
+      progressButtons = <div>
+        <div className="row" style={{position: 'absolute'}}>
+          <button
+            type="button"
+            className="tempBackBtn"
+            disabled={this.state.disableBackward}
+            onClick={this.handleBack}>
+              {this.state.buttonBackText} <FaArrowLeft size={13} />
+          </button>
+          {measureButton}
+          {btnRight}
+        </div>
+        <button type="button" className="odViewGraphBtn" onClick={this.handleGraph}>VIEW COLLECTED DATA</button>
       </div>
     }
 
@@ -609,9 +617,14 @@ class TempCal extends React.Component {
 
     let graphs;
     let calInputs;
-    let tempCalTitles = <div></div>;
+    let tempCalTitles = <div />;
     let linearProgress;
-    let backArrow = <Link className="backHomeBtn" id="experiments" to={{pathname:routes.CALMENU, socket:this.props.socket , logger:this.props.logger}}><FaArrowLeft/></Link>;
+    let backArrow = <Link
+      className="backHomeBtn"
+      id="experiments"
+      to={{pathname:routes.CALMENU, socket:this.props.socket , logger:this.props.logger}}>
+        <FaArrowLeft/>
+    </Link>;
     const calGraphic = <Card className={classes.cardTempCalGUI}>
       <TempCalGUI
         vialOpacities = {this.state.vialOpacities}
@@ -625,45 +638,65 @@ class TempCal extends React.Component {
     </Card>
 
     if (this.state.displayGraphs) {
-        linearProgress = <div />;
-        graphs = <VialArrayGraph
-            parameter = {this.state.parameter}
-            exptDir = 'na'
-            activePlot = 'ALL'
-            ymax = {55}
-            timePlotted = {this.state.timePlotted}
-            downsample = {this.state.downsample}
-            xaxisName = 'ADC VALUE'
-            yaxisName = 'TEMPERATURE (C)'
-            displayCalibration = {this.state.displayCalibration}
-            dataType = {{type:'calibration', param: 'temp'}}
-            passedData = {{vialData: this.state.vialData, enteredValuesFloat: this.state.enteredValues, calibration: this.state.calibration}}/>;
-        calInputs = <div />;
-        progressButtons = <div><button className="odViewGraphBtnBack" onClick={this.handleGraph}>BACK</button></div>;
-        backArrow = <button className="backHomeBtn" style={{zIndex: '10', position: 'absolute', top: '-2px', left: '-35px'}} id="experiments" onClick={this.handleGraph}><FaArrowLeft/></button>
+      linearProgress = <div />;
+      graphs = <VialArrayGraph
+        parameter = {this.state.parameter}
+        exptDir = 'na'
+        activePlot = 'ALL'
+        ymax = {55}
+        timePlotted = {this.state.timePlotted}
+        downsample = {this.state.downsample}
+        xaxisName = 'ADC VALUE'
+        yaxisName = 'TEMPERATURE (C)'
+        displayCalibration = {this.state.displayCalibration}
+        dataType = {{type:'calibration', param: 'temp'}}
+        passedData = {{
+          vialData: this.state.vialData,
+          enteredValuesFloat: this.state.enteredValues,
+          calibration: this.state.calibration
+      }}/>;
+      calInputs = <div />;
+      progressButtons = <div>
+        <button
+          type="button"
+          className="odViewGraphBtnBack"
+          onClick={this.handleGraph}>
+            BACK
+        </button>
+      </div>;
+      backArrow = <button
+        type="button"
+        className="backHomeBtn"
+        style={{zIndex: '10', position: 'absolute', top: '-2px', left: '-35px'}}
+        id="experiments"
+        onClick={this.handleGraph}>
+          <FaArrowLeft/>
+      </button>
+    } else {
+      graphs = <div />;
+      calInputs = <TempcalInput
+        onChangeValue={this.handleTempInput}
+        onInputsEntered = {this.state.inputsEntered}
+        enteredValues = {this.state.enteredValues}/>;
+      tempCalTitles = <button
+        type="button"
+        className="odCalTitles"
+        onClick={this.handleKeyboardModal}>
+          <h4 style={{fontWeight: 'bold', fontStyle: 'italic'}}>{this.state.experimentName}</h4>
+      </button>;
+      linearProgress = <div>
+        <LinearProgress
+          classes={{
+            root: classes.progressBar,
+            colorPrimary: classes.colorPrimary,
+            bar: classes.bar,
+          }}
+          variant="determinate"
+          value={this.state.progressCompleted}
+        />
+        {statusText}
+      </div>;
     }
-    else {
-        graphs = <div />;
-        calInputs = <TempcalInput
-          onChangeValue={this.handleTempInput}
-          onInputsEntered = {this.state.inputsEntered}
-          enteredValues = {this.state.enteredValues}/>;
-        tempCalTitles = <button
-          className="odCalTitles"
-          onClick={this.handleKeyboardModal}>
-          <h4 style={{fontWeight: 'bold', fontStyle: 'italic'}}> {this.state.experimentName} </h4>
-        </button>;
-        linearProgress = <div><LinearProgress
-            classes= {{
-              root: classes.progressBar,
-              colorPrimary: classes.colorPrimary,
-              bar: classes.bar,
-            }}
-            variant="determinate"
-            value={this.state.progressCompleted} />
-            {statusText}</div>;
-    }
-
     return (
       <div>
         {backArrow}
@@ -674,7 +707,11 @@ class TempCal extends React.Component {
         {progressButtons}
         {tempCalTitles}
 
-        <TextKeyboard ref={this.keyboard} onKeyboardInput={this.handleKeyboardInput} onFinishedExpt={this.handleFinishExpt} keyboardPrompt={this.state.keyboardPrompt}/>
+        <TextKeyboard
+          ref={this.keyboard}
+          onKeyboardInput={this.handleKeyboardInput}
+          onFinishedExpt={this.handleFinishExpt}
+          keyboardPrompt={this.state.keyboardPrompt}/>
         <ModalAlert
           alertOpen= {this.state.alertOpen}
           alertQuestion = {this.state.alertQuestion}
@@ -685,9 +722,7 @@ class TempCal extends React.Component {
           alertQuestion = {this.state.resumeQuestion}
           alertAnswers = {this.state.resumeAnswers}
           onAlertAnswer = {this.onResumeAnswer}/>
-
       </div>
-
     );
   }
 }

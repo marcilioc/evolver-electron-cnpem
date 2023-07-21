@@ -92,7 +92,7 @@ class PumpCal extends React.Component {
     for (let i = 0; i < data.length; i++) {
       vialData.push(Object.assign({},data[i]));
     }
-   this.state = {
+    this.state = {
       currentStep: 0,
       pumpCalModes: [{arrayName: 'IN1', arrayMode: 'NA'}, {arrayName: 'IN2', arrayMode: 'NA'}, {arrayName: 'E', arrayMode: 'NA'}],
       pumpCalModesFiltered: [],
@@ -129,7 +129,7 @@ class PumpCal extends React.Component {
 
   componentDidMount() {
     this.props.logger.info('Routed to Pump Calibration Page.');
-    var initialData = this.state.vialData;
+    let initialData = this.state.vialData;
     initialData = this.formatVialSelectStrings(initialData, 'IN1');
     initialData = this.formatVialSelectStrings(initialData, 'IN2');
     initialData = this.formatVialSelectStrings(initialData, 'E');
@@ -375,7 +375,7 @@ class PumpCal extends React.Component {
         enteredValues = {this.state.enteredValues[this.state.pumpCalModesFiltered[currentStep-1].arrayName]}/>
     }
 
-    if (this.state.currentStep != 0) {
+    if (this.state.currentStep !== 0) {
         var pumpButtonText = this.state.pumpButtonText + ' ' + this.state.pumpCalModesFiltered[currentStep-1].arrayName;
         pumpButton =
         <button
